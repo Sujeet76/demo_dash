@@ -105,3 +105,102 @@ export const insertRowAtPosition = async (auth, spreadsheetId, sheetId, rowIndex
     throw error;
   }
 };
+
+export const credentials = {
+  type: process.env.GOOGLE_APPLICATION_TYPE,
+  project_id: process.env.GOOGLE_APPLICATION_PROJECT_ID,
+  private_key_id: process.env.GOOGLE_APPLICATION_PRIVATE_KEY_ID,
+  private_key: process.env.GOOGLE_APPLICATION_PRIVATE_KEY?.replace(
+    /\\n/g,
+    "\n"
+  ),
+  client_email: process.env.GOOGLE_APPLICATION_CLIENT_EMAIL,
+  client_id: process.env.GOOGLE_APPLICATION_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: process.env.GOOGLE_APPLICATION_CLIENT_CERT_URL,
+  universe_domain: "googleapis.com",
+};
+
+export const MONTH_NAME_MAP = {
+  // January variations
+  jan: "Jan",
+  january: "Jan",
+  1: "Jan",
+  "01": "Jan",
+
+  // February variations
+  feb: "Feb",
+  february: "Feb",
+  2: "Feb",
+  "02": "Feb",
+
+  // March variations
+  mar: "March",
+  march: "March",
+  3: "March",
+  "03": "March",
+
+  // April variations
+  apr: "April",
+  april: "April",
+  4: "April",
+  "04": "April",
+
+  // May variations
+  may: "May",
+  5: "May",
+  "05": "May",
+
+  // June variations
+  jun: "June",
+  june: "June",
+  6: "June",
+  "06": "June",
+
+  // July variations
+  jul: "July",
+  july: "July",
+  7: "July",
+  "07": "July",
+
+  // August variations
+  aug: "Aug",
+  august: "Aug",
+  8: "Aug",
+  "08": "Aug",
+
+  // September variations
+  sep: "Sep",
+  sept: "Sep",
+  september: "Sep",
+  9: "Sep",
+  "09": "Sep",
+
+  // October variations
+  oct: "Oct",
+  october: "Oct",
+  10: "Oct",
+
+  // November variations
+  nov: "Nov",
+  november: "Nov",
+  11: "Nov",
+
+  // December variations
+  dec: "Dec",
+  december: "Dec",
+  12: "Dec",
+};
+
+
+export const getStandardizedMonthName = (monthText) => {
+  if (!monthText) return null;
+
+  // Convert to lowercase for case-insensitive matching
+  const normalized = monthText.toLowerCase();
+
+  // Return the standardized name or null if not found
+  return MONTH_NAME_MAP[normalized] || null;
+};

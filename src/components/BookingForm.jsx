@@ -20,6 +20,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       specialRequests: ''
     };
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Update booking when initialBooking prop changes
   useEffect(() => {
@@ -80,6 +81,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
     
     try {
       // Send the data to Google Sheets API through our Next.js API route
+      setIsSubmitting(true);
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
@@ -124,6 +126,8 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
     } catch (error) {
       console.error('Error adding booking to Google Sheets:', error);
       alert('Failed to add booking to Google Sheets. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -149,89 +153,87 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
   };
   
   return (
-    <div style={{ 
-      borderRadius: '8px',
-      padding: '20px',
-      marginBottom: '20px',
-      color: 'white'
-    }}>
-      <h3 
-        style={{ 
-          margin: '0 0 24px 0', 
-          fontSize: '20px',
-          fontWeight: '600',
-          background: 'linear-gradient(90deg, #8b6f47, #d9c2a6)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
+    <div
+      style={{
+        borderRadius: "8px",
+        padding: "20px",
+        marginBottom: "20px",
+        color: "white",
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 24px 0",
+          fontSize: "20px",
+          fontWeight: "600",
+          background: "linear-gradient(90deg, #8b6f47, #d9c2a6)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
         }}
       >
         Create New Booking
       </h3>
-      
+
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+          }}
+        >
           <div>
-            <label style={labelStyle}>
-              Day
-            </label>
-            <input 
-              type="text" 
+            <label style={labelStyle}>Day</label>
+            <input
+              type="text"
               name="day"
-              value={booking.day} 
-              onChange={handleChange} 
+              value={booking.day}
+              onChange={handleChange}
               required
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Month
-            </label>
-            <input 
-              type="text" 
+            <label style={labelStyle}>Month</label>
+            <input
+              type="text"
               name="month"
-              value={booking.month} 
-              onChange={handleChange} 
+              value={booking.month}
+              onChange={handleChange}
               required
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Client
-            </label>
-            <input 
-              type="text" 
+            <label style={labelStyle}>Client</label>
+            <input
+              type="text"
               name="client"
-              value={booking.client} 
-              onChange={handleChange} 
+              value={booking.client}
+              onChange={handleChange}
               required
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              REQ Rooms
-            </label>
-            <input 
-              type="text" 
+            <label style={labelStyle}>REQ Rooms</label>
+            <input
+              type="text"
               name="reqRooms"
-              value={booking.reqRooms} 
+              value={booking.reqRooms}
               onChange={handleChange}
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Confirm
-            </label>
-            <select 
+            <label style={labelStyle}>Confirm</label>
+            <select
               name="confirm"
-              value={booking.confirm} 
+              value={booking.confirm}
               onChange={handleChange}
               style={inputStyle}
             >
@@ -240,83 +242,71 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
               <option value="Cancelled">Cancelled</option>
             </select>
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Agent
-            </label>
-            <input 
-              type="text" 
+            <label style={labelStyle}>Agent</label>
+            <input
+              type="text"
               name="agent"
-              value={booking.agent} 
+              value={booking.agent}
               onChange={handleChange}
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              From 
-            </label>
-            <input 
-              type="date" 
+            <label style={labelStyle}>From</label>
+            <input
+              type="date"
               name="from"
-              value={booking.from} 
-              onChange={handleChange} 
+              value={booking.from}
+              onChange={handleChange}
               required
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              To 
-            </label>
-            <input 
-              type="date" 
+            <label style={labelStyle}>To</label>
+            <input
+              type="date"
               name="to"
-              value={booking.to} 
-              onChange={handleChange} 
+              value={booking.to}
+              onChange={handleChange}
               required
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Nights
-            </label>
-            <input 
-              type="number" 
+            <label style={labelStyle}>Nights</label>
+            <input
+              type="number"
               name="nights"
-              value={booking.nights} 
+              value={booking.nights}
               onChange={handleChange}
               min="1"
               readOnly
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Voucher No Reconfirm
-            </label>
-            <input 
-              type="text" 
+            <label style={labelStyle}>Voucher No Reconfirm</label>
+            <input
+              type="text"
               name="voucherNoReconfirm"
-              value={booking.voucherNoReconfirm} 
+              value={booking.voucherNoReconfirm}
               onChange={handleChange}
               style={inputStyle}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Safari
-            </label>
-            <select 
+            <label style={labelStyle}>Safari</label>
+            <select
               name="safari"
-              value={booking.safari} 
+              value={booking.safari}
               onChange={handleChange}
               style={inputStyle}
             >
@@ -324,28 +314,24 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
               <option value="Yes">Yes</option>
             </select>
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Safari Date (dd/mm/yyyy)
-            </label>
-            <input 
-              type="date" 
+            <label style={labelStyle}>Safari Date (dd/mm/yyyy)</label>
+            <input
+              type="date"
               name="safariDate"
-              value={booking.safariDate} 
+              value={booking.safariDate}
               onChange={handleChange}
               style={inputStyle}
-              disabled={booking.safari === 'No'}
+              disabled={booking.safari === "No"}
             />
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Arrival Details
-            </label>
-            <select 
+            <label style={labelStyle}>Arrival Details</label>
+            <select
               name="arrivalDetails"
-              value={booking.arrivalDetails} 
+              value={booking.arrivalDetails}
               onChange={handleChange}
               style={inputStyle}
             >
@@ -354,58 +340,59 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
               <option value="Own">Own</option>
             </select>
           </div>
-          
+
           <div>
-            <label style={labelStyle}>
-              Guest Email/Phone
-            </label>
-            <input 
-              type="text" 
+            <label style={labelStyle}>Guest Email/Phone</label>
+            <input
+              type="text"
               name="guestContactInfo"
-              value={booking.guestContactInfo} 
+              value={booking.guestContactInfo}
               onChange={handleChange}
               style={inputStyle}
               placeholder="Email or phone number"
             />
           </div>
-          
-          <div style={{ gridColumn: '1 / span 2' }}>
-            <label style={labelStyle}>
-              Special Requests
-            </label>
-            <textarea 
+
+          <div style={{ gridColumn: "1 / span 2" }}>
+            <label style={labelStyle}>Special Requests</label>
+            <textarea
               name="specialRequests"
-              value={booking.specialRequests} 
+              value={booking.specialRequests}
               onChange={handleChange}
-              style={{...inputStyle, minHeight: '80px', resize: 'vertical'}}
+              style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }}
             />
           </div>
         </div>
-        
-        <div style={{ marginTop: '30px', textAlign: 'right' }}>
-          <button 
+
+        <div style={{ marginTop: "30px", textAlign: "right" }}>
+          <button
             type="submit"
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             style={{
-              padding: '12px 24px',
+              padding: "12px 24px",
               background: isHovering
-                ? 'linear-gradient(90deg, #8b6f47, #a68a64)'
-                : 'linear-gradient(90deg, #7a5f3d, #8b6f47)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              letterSpacing: '0.5px',
-              transition: 'all 0.3s',
+                ? "linear-gradient(90deg, #8b6f47, #a68a64)"
+                : "linear-gradient(90deg, #7a5f3d, #8b6f47)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "10px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              letterSpacing: "0.5px",
+              transition: "all 0.3s",
               boxShadow: isHovering
-                ? '0 6px 20px rgba(139, 111, 71, 0.4)'
-                : '0 4px 12px rgba(139, 111, 71, 0.3)',
+                ? "0 6px 20px rgba(139, 111, 71, 0.4)"
+                : "0 4px 12px rgba(139, 111, 71, 0.3)",
             }}
+            disabled={isSubmitting}
           >
-            CREATE BOOKING
+            {isSubmitting
+              ? "Submitting..."
+              : isEditing
+              ? "Update Booking"
+              : "CREATE BOOKING"}
           </button>
         </div>
       </form>
