@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import BookingForm from "./BookingForm";
 import BookingList from "./BookingList";
+import CalendarView from "./calender-view";
 import SearchBar from "./SearchBar";
 import ExportButton from "./ExportButton";
 import { bookingsApi } from "@/utils/api";
@@ -23,6 +24,7 @@ function BookingManager() {
     page: 1,
     pageSize: 400,
   });
+  const [viewMode, setViewMode] = useState("list"); // "list" or "calendar"
 
   const queryClient = useQueryClient();
 
@@ -305,8 +307,47 @@ function BookingManager() {
               }}
             >
               BOOKING DASHBOARD
-            </h2>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            </h2>            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              {/* View Mode Toggle */}
+              <div style={{
+                display: "flex",
+                padding: "2px",
+                background: "rgba(30, 26, 26, 0.8)",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+              }}>
+                <button
+                  onClick={() => setViewMode("list")}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: viewMode === "list" ? "rgba(139, 111, 71, 0.7)" : "transparent",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                >
+                  List View
+                </button>
+                <button
+                  onClick={() => setViewMode("calendar")}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: viewMode === "calendar" ? "rgba(139, 111, 71, 0.7)" : "transparent",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                >
+                  Calendar View
+                </button>
+              </div>
+
               {/* Month Filter Dropdown */}
               <select
                 value={selectedMonth}
@@ -431,59 +472,62 @@ function BookingManager() {
                 initialBooking={currentBooking}
                 isEditing={isEditing}
               />
-            ) : (
-              <>
-                <SearchBar
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                />
-                <div>
-                  <input
-                    type="date"
-                    value={dateFilter.fromDate || ""}
-                    onChange={(e) =>
-                      setDateRange((prev) => ({
-                        ...prev,
-                        fromDate: e.target.value,
-                      }))
-                    }
-                    placeholder="From Date"
-                    style={{
-                      padding: "8px",
-                      marginRight: "10px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                      backgroundColor: "rgba(30, 26, 26, 0.8)",
-                      color: "#fff",
-                    }}
-                  />
-                  <input
-                    type="date"
-                    value={dateFilter.toDate || ""}
-                    onChange={(e) =>
-                      setDateRange((prev) => ({
-                        ...prev,
-                        toDate: e.target.value,
-                      }))
-                    }
-                    placeholder="To Date"
-                    style={{
-                      padding: "8px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                      backgroundColor: "rgba(30, 26, 26, 0.8)",
-                      color: "#fff",
-                    }}
-                  />
-                </div>
-                <BookingList
-                  bookings={filteredBookings}
-                  onDelete={deleteBooking}
-                  onModify={modifyBooking}
-                />
-
-                {/* Pagination Controls */}
-                {data?.pagination?.totalPages > 1 && (
+            ) : (              <>
+                {viewMode === "list" ? (
+                  <>
+                    <SearchBar
+                      searchTerm={searchTerm}
+                      onSearchChange={setSearchTerm}
+                    />
+                    <div>
+                      <input
+                        type="date"
+                        value={dateFilter.fromDate || ""}
+                        onChange={(e) =>
+                          setDateRange((prev) => ({
+                            ...prev,
+                            fromDate: e.target.value,
+                          }))
+                        }
+                        placeholder="From Date"
+                        style={{
+                          padding: "8px",
+                          marginRight: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid rgba(255, 255, 255, 0.2)",
+                          backgroundColor: "rgba(30, 26, 26, 0.8)",
+                          color: "#fff",
+                        }}
+                      />
+                      <input
+                        type="date"
+                        value={dateFilter.toDate || ""}
+                        onChange={(e) =>
+                          setDateRange((prev) => ({
+                            ...prev,
+                            toDate: e.target.value,
+                          }))
+                        }
+                        placeholder="To Date"
+                        style={{
+                          padding: "8px",
+                          borderRadius: "8px",
+                          border: "1px solid rgba(255, 255, 255, 0.2)",
+                          backgroundColor: "rgba(30, 26, 26, 0.8)",
+                          color: "#fff",
+                        }}
+                      />
+                    </div>
+                    <BookingList
+                      bookings={filteredBookings}
+                      onDelete={deleteBooking}
+                      onModify={modifyBooking}
+                    />
+                  </>
+                ) : (
+                  <CalendarView />
+                )}                {/* Pagination Controls */}
+                {viewMode === "list" && data?.pagination?.totalPages > 1 && (
                   <div
                     style={{
                       display: "flex",

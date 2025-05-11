@@ -23,15 +23,25 @@ export const getMonthName = (monthNumber) => {
 
 // Parse date in DD/MM/YYYY format to a Date object
 export function parseFormattedDate(dateStr) {
-  if (!dateStr) return new Date(0); 
-  
+  if (!dateStr) return null;
+
   try {
-    const [day, month, year] = dateStr.split('/');
-    if (!day || !month || !year) return new Date(0);
-    return new Date(year, month - 1, day);
+    const parts = dateStr.trim().split("/");
+    if (parts.length !== 3) return null;
+
+    // Extract day, month, year from the DD/MM/YYYY format
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JavaScript Date
+    const year = parseInt(parts[2], 10);
+
+    // Check if the values are valid
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+
+    // Create date with UTC time to avoid timezone issues
+    return new Date(Date.UTC(year, month, day));
   } catch (error) {
     console.error(`Error parsing date: ${dateStr}`, error);
-    return new Date(0); // Default to earliest date if there's a parsing error
+    return null;
   }
 }
 
@@ -43,6 +53,15 @@ export const getGoogleSheetsAuth = async (credentials) => {
 
   return auth;
 };
+
+export function normalizeDateForComparison(date) {
+  if (!date) return null;
+
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
 
 // Function to append data to a Google Sheet
 export const appendToSheet = async (auth, spreadsheetId, range, values) => {

@@ -27,6 +27,21 @@ const bookingsApi = {
 
     return data;
   },
+
+  getBookingAggregates: async ({ month = "", fromDate = null, toDate = null, view = "month" }) => {
+    const params = { view };
+    if (month) params.month = month;
+    if (fromDate) params.fromDate = fromDate;
+    if (toDate) params.toDate = toDate;
+
+    const { data } = await axios.get("/api/bookings/getBookingAggregates", { params });
+
+    if (!data.success) {
+      throw new Error(data.error || "Failed to fetch booking aggregates");
+    }
+
+    return data;
+  },
 };
 
 export {

@@ -4,6 +4,7 @@ import {
   MONTH_NAMES,
   parseFormattedDate,
   credentials,
+  normalizeDateForComparison,
 } from "@/utils/googleSheetsConfig";
 import { google } from "googleapis";
 
@@ -88,30 +89,85 @@ export async function GET(request) {
         // Sheet might not exist, just continue
         console.log(`Sheet ${sheetName} doesn't exist or is empty`);
       }
-    } // Extract just the row data
+    }
+
+    // Extract just the row data
     let rows = allRows.map((item) => item.row);
+
     if (fromDate || toDate) {
-      // Parse dates as Date objects for comparison
-      const fromDateF = fromDate ? new Date(fromDate) : null;
-      const toDateF = toDate ? new Date(toDate) : null;
+      console.log(`Filtering dates - fromDate: ${fromDate}, toDate: ${toDate}`);
+
+      // Parse query dates as Date objects for comparison
+      const fromDateObj = fromDate
+        ? normalizeDateForComparison(new Date(fromDate))
+        : null;
+      const toDateObj = toDate
+        ? normalizeDateForComparison(new Date(toDate))
+        : null;
+
+      console.log(
+        `Parsed query dates - fromDateObj: ${fromDateObj}, toDateObj: ${toDateObj}`
+      );
+
+      // Keep track of how many rows match our date criteria
+      let matchCount = 0;
 
       rows = rows.filter((row) => {
-        // Assuming row[7] contains date in a format parsable by Date constructor
-        const rowDate = new Date(row[7]);
+        // Parse spreadsheet date in DD/MM/YYYY format using imported parseFormattedDate
+        const rowDateStr = row[7] || "";
+        const rowDate = parseFormattedDate(rowDateStr);
+
+        // Normalize the row date for comparison (set time to 00:00:00)
+        const normalizedRowDate = normalizeDateForComparison(rowDate);
+
+        // Log every 10th row for debugging without spamming logs
+        if (Math.random() < 0.1) {
+          console.log(
+            `Sample row date check: "${rowDateStr}" parsed as ${rowDate}, normalized: ${normalizedRowDate}`
+          );
+
+          if (fromDateObj && toDateObj) {
+            console.log(
+              `Comparing: ${normalizedRowDate} >= ${fromDateObj} && ${normalizedRowDate} <= ${toDateObj}`
+            );
+            console.log(
+              `Result: ${
+                normalizedRowDate >= fromDateObj &&
+                normalizedRowDate <= toDateObj
+              }`
+            );
+          }
+        }
+
+        let matches = false;
+
+        if (!normalizedRowDate) {
+          // Skip rows with invalid dates
+          return false;
+        }
 
         // If only fromDate is specified, filter dates >= fromDate
-        if (fromDateF && !toDateF) {
-          return rowDate >= fromDateF;
+        if (fromDateObj && !toDateObj) {
+          matches = normalizedRowDate >= fromDateObj;
         }
-
         // If only toDate is specified, filter dates <= toDate
-        if (toDateF && !fromDateF) {
-          return rowDate <= toDateF;
+        else if (toDateObj && !fromDateObj) {
+          matches = normalizedRowDate <= toDateObj;
+        }
+        // If both dates are specified, filter dates between fromDate and toDate (inclusive)
+        else if (fromDateObj && toDateObj) {
+          // Use normalized dates to ensure proper date comparisons regardless of time component
+          matches =
+            normalizedRowDate >= fromDateObj && normalizedRowDate <= toDateObj;
         }
 
-        // If both dates are specified, filter dates between fromDate and toDate (inclusive)
-        return rowDate >= fromDateF && rowDate <= toDateF;
+        if (matches) matchCount++;
+        return matches;
       });
+
+      console.log(
+        `Date filtering complete. Found ${matchCount} matching rows out of ${allRows.length} total rows`
+      );
     }
 
     const bookings = rows.map((row, index) => {
@@ -138,8 +194,12 @@ export async function GET(request) {
       };
     });
 
-    // Sort bookings by date
-    bookings.sort((a, b) => a.toDate - b.toDate);
+    // Sort bookings by date, handling null values
+    bookings.sort((a, b) => {
+      if (!a.toDate) return 1;
+      if (!b.toDate) return -1;
+      return a.toDate - b.toDate;
+    });
 
     // Calculate total items and pages for pagination
     const totalItems = bookings.length;
@@ -154,7 +214,7 @@ export async function GET(request) {
     const endIndex = startIndex + pageSize;
     const paginatedBookings = bookings.slice(startIndex, endIndex);
 
-    // console.log({paginatedBookings})
+    console.log(`Found ${paginatedBookings.length} bookings after pagination`);
 
     return Response.json({
       success: true,
@@ -167,8 +227,6 @@ export async function GET(request) {
         availableMonths,
       },
     });
-
-    // Using the imported parseFormattedDate function
   } catch (error) {
     console.error("Error fetching data from Google Sheets:", error);
     return Response.json(
