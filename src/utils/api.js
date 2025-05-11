@@ -42,6 +42,40 @@ const bookingsApi = {
 
     return data;
   },
+
+  getBookingsByCompany: async ({ sortBy = "count", sortOrder = "desc" }) => {
+    const params = { sortBy, sortOrder };
+
+    const { data } = await axios.get("/api/bookings/getBookingsByCompany", { params });
+
+    if (!data.success) {
+      throw new Error(data.error || "Failed to fetch bookings by company");
+    }
+
+    return data;
+  },
+
+  getBookingsForCompany: async ({ 
+    company, 
+    sortBy = "fromDate", 
+    sortOrder = "asc",
+    page = 1,
+    pageSize = 10
+  }) => {
+    if (!company) {
+      throw new Error("Company parameter is required");
+    }
+
+    const params = { company, sortBy, sortOrder, page, pageSize };
+
+    const { data } = await axios.get("/api/bookings/getBookingsForCompany", { params });
+
+    if (!data.success) {
+      throw new Error(data.error || "Failed to fetch bookings for company");
+    }
+
+    return data;
+  },
 };
 
 export {

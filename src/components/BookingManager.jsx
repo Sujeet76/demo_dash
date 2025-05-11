@@ -3,6 +3,7 @@ import { useState } from "react";
 import BookingForm from "./BookingForm";
 import BookingList from "./BookingList";
 import CalendarView from "./calender-view";
+import CompanyView from "./CompanyView";
 import SearchBar from "./SearchBar";
 import ExportButton from "./ExportButton";
 import { bookingsApi } from "@/utils/api";
@@ -15,8 +16,7 @@ function BookingManager() {
   const [isHoveringNewBooking, setIsHoveringNewBooking] = useState(false);
   const [currentBooking, setCurrentBooking] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [dateFilter, setDateRange] = useState({
+  const [selectedMonth, setSelectedMonth] = useState("");  const [dateFilter, setDateRange] = useState({
     fromDate: null,
     toDate: null,
   });
@@ -24,7 +24,7 @@ function BookingManager() {
     page: 1,
     pageSize: 400,
   });
-  const [viewMode, setViewMode] = useState("list"); // "list" or "calendar"
+  const [viewMode, setViewMode] = useState("list"); // "list", "calendar", or "company"
 
   const queryClient = useQueryClient();
 
@@ -207,57 +207,61 @@ function BookingManager() {
               margin: 0,
               padding: 0,
             }}
-          >
-            <li style={{ marginRight: "24px" }}>
+          >            <li style={{ marginRight: "24px" }}>
               <a
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setViewMode("list");
+                }}
                 style={{
-                  color: "rgba(255, 255, 255, 0.8)",
+                  color: viewMode === "list" ? "#d9c2a6" : "rgba(255, 255, 255, 0.8)",
                   textDecoration: "none",
                   fontSize: "14px",
                   fontWeight: "500",
+                  borderBottom: viewMode === "list" ? "2px solid #8b6f47" : "none",
+                  paddingBottom: "4px"
                 }}
               >
-                Home
+                Bookings List
               </a>
             </li>
             <li style={{ marginRight: "24px" }}>
               <a
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setViewMode("calendar");
+                }}
                 style={{
-                  color: "rgba(255, 255, 255, 0.8)",
+                  color: viewMode === "calendar" ? "#d9c2a6" : "rgba(255, 255, 255, 0.8)",
                   textDecoration: "none",
                   fontSize: "14px",
                   fontWeight: "500",
+                  borderBottom: viewMode === "calendar" ? "2px solid #8b6f47" : "none",
+                  paddingBottom: "4px"
                 }}
               >
-                Features
+                Calendar View
               </a>
             </li>
             <li style={{ marginRight: "24px" }}>
               <a
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setViewMode("company");
+                }}
                 style={{
-                  color: "rgba(255, 255, 255, 0.8)",
+                  color: viewMode === "company" ? "#d9c2a6" : "rgba(255, 255, 255, 0.8)",
                   textDecoration: "none",
                   fontSize: "14px",
                   fontWeight: "500",
+                  borderBottom: viewMode === "company" ? "2px solid #8b6f47" : "none",
+                  paddingBottom: "4px"
                 }}
               >
-                Docs
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                style={{
-                  color: "rgba(255, 255, 255, 0.8)",
-                  textDecoration: "none",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
-                Contact
+                Company View
               </a>
             </li>
           </ul>
@@ -308,8 +312,7 @@ function BookingManager() {
             >
               BOOKING DASHBOARD
             </h2>            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              {/* View Mode Toggle */}
-              <div style={{
+              {/* View Mode Toggle */}              <div style={{
                 display: "flex",
                 padding: "2px",
                 background: "rgba(30, 26, 26, 0.8)",
@@ -345,6 +348,21 @@ function BookingManager() {
                   }}
                 >
                   Calendar View
+                </button>
+                <button
+                  onClick={() => setViewMode("company")}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: viewMode === "company" ? "rgba(139, 111, 71, 0.7)" : "transparent",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                >
+                  Company View
                 </button>
               </div>
 
@@ -471,8 +489,7 @@ function BookingManager() {
                 onAddBooking={addBooking}
                 initialBooking={currentBooking}
                 isEditing={isEditing}
-              />
-            ) : (              <>
+              />            ) : (              <>
                 {viewMode === "list" ? (
                   <>
                     <SearchBar
@@ -524,9 +541,11 @@ function BookingManager() {
                       onModify={modifyBooking}
                     />
                   </>
-                ) : (
+                ) : viewMode === "calendar" ? (
                   <CalendarView />
-                )}                {/* Pagination Controls */}
+                ) : (
+                  <CompanyView />
+                )}{/* Pagination Controls */}
                 {viewMode === "list" && data?.pagination?.totalPages > 1 && (
                   <div
                     style={{
