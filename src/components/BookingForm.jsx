@@ -1,89 +1,123 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 function BookingForm({ onAddBooking, initialBooking, isEditing }) {
   const [booking, setBooking] = useState(() => {
-    return initialBooking || {
-      day: '',
-      month: '',
-      client: '',
-      reqRooms: '',
-      confirm: 'Confirmed',
-      agent: '',
-      from: '',
-      to: '',
-      nights: '',
-      voucherNoReconfirm: '',
-      safari: 'No',
-      safariDate: '',
-      arrivalDetails: 'Train',
-      guestContactInfo: '',
-      specialRequests: ''
-    };
+    return (
+      initialBooking || {
+        client: "",
+        reqRooms: "",
+        confirm: "Confirmed",
+        agent: "",
+        from: "",
+        to: "",
+        nights: "",
+        voucherNoReconfirm: "",
+        safari: "No",
+        safariDate: "",
+        arrivalDetails: "Train",
+        guestContactInfo: "",
+        specialRequests: "",
+      }
+    );
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Update booking when initialBooking prop changes
   useEffect(() => {
     if (initialBooking) {
       setBooking(initialBooking);
     }
   }, [initialBooking]);
-  
+
   const [isHovering, setIsHovering] = useState(false);
-  
+
+  // Function to get day name from date
+  const getDayName = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    return days[date.getDay()];
+  };
+
+  // Function to get formatted month from date
+  const getFormattedMonth = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return `${date.getDate()}-${months[date.getMonth()]}`;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setBooking(prev => ({
+    setBooking((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Auto-calculate nights when from and to dates are selected
-    if (name === 'from' || name === 'to') {
+    if (name === "from" || name === "to") {
       if (booking.from && e.target.value) {
-        const fromDate = name === 'from' ? new Date(value) : new Date(booking.from);
-        const toDate = name === 'to' ? new Date(value) : new Date(booking.to);
+        const fromDate =
+          name === "from" ? new Date(value) : new Date(booking.from);
+        const toDate = name === "to" ? new Date(value) : new Date(booking.to);
         const timeDiff = toDate.getTime() - fromDate.getTime();
         const nightCount = Math.ceil(timeDiff / (1000 * 3600 * 24));
-        
+
         if (nightCount > 0) {
-          setBooking(prev => ({
+          setBooking((prev) => ({
             ...prev,
-            nights: nightCount
+            nights: nightCount,
           }));
         }
       }
     }
   };
-  
+
   const formatDate = (dateString) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
-  
+
   const handleSubmit = async (e) => {
-    e.preventDefault();    // Format dates before submitting
-    
+    e.preventDefault(); // Format dates before submitting
+
     // Get user information from localStorage
-    let userIdentifier = 'unknown';
+    let userIdentifier = "unknown";
     try {
-      const userInfoStr = localStorage.getItem('userInfo');
+      const userInfoStr = localStorage.getItem("userInfo");
       if (userInfoStr) {
         const userInfo = JSON.parse(userInfoStr);
-        userIdentifier = userInfo.username || localStorage.getItem('username') || 'unknown';
-      } else if (localStorage.getItem('username')) {
-        userIdentifier = localStorage.getItem('username');
+        userIdentifier =
+          userInfo.username || localStorage.getItem("username") || "unknown";
+      } else if (localStorage.getItem("username")) {
+        userIdentifier = localStorage.getItem("username");
       }
     } catch (error) {
-      console.error('Error parsing user info:', error);
+      console.error("Error parsing user info:", error);
     }
-    
+
     const formattedBooking = {
       ...booking,
+      // Derive day and month from the 'from' date
+      day: getDayName(booking.from),
+      month: getFormattedMonth(booking.from),
       formattedFrom: formatDate(booking.from),
       formattedTo: formatDate(booking.to),
       formattedSafariDate: formatDate(booking.safariDate),
@@ -93,84 +127,85 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       // Add user tracking information
       createdBy: userIdentifier,
       createdAt: new Date().toISOString(),
-      isEditing: isEditing // Pass the editing flag to the API
+      isEditing: isEditing, // Pass the editing flag to the API
     };
 
     // console.log({formattedBooking});
-    
+
     try {
       // Send the data to Google Sheets API through our Next.js API route
       setIsSubmitting(true);
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
+      const response = await fetch("/api/bookings", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formattedBooking),
       });
 
       const result = await response.json();
-      console.log('API response:', result);      if (!result.success) {
-        throw new Error(result.error || 'Failed to add booking to Google Sheets');
+      console.log("API response:", result);
+      if (!result.success) {
+        throw new Error(
+          result.error || "Failed to add booking to Google Sheets"
+        );
       }
-      
+
       // Update the booking with the returned UUID if it's new
       if (!isEditing && result.uuid) {
         formattedBooking.uuid = result.uuid;
       }
-      
+
       // Add to local state
       onAddBooking(formattedBooking);
-      
+
       // Reset the form
       setBooking({
-        day: '',
-        month: '',
-        client: '',
-        reqRooms: '',
-        confirm: 'Confirmed',
-        agent: '',
-        from: '',
-        to: '',
-        nights: '',
-        voucherNoReconfirm: '',
-        safari: 'No',
-        safariDate: '',
-        arrivalDetails: 'Train',
-        guestContactInfo: '',
-        specialRequests: ''
+        client: "",
+        reqRooms: "",
+        confirm: "Confirmed",
+        agent: "",
+        from: "",
+        to: "",
+        nights: "",
+        voucherNoReconfirm: "",
+        safari: "No",
+        safariDate: "",
+        arrivalDetails: "Train",
+        guestContactInfo: "",
+        specialRequests: "",
       });
-      
-      alert('Booking successfully added to Google Sheets!');
+
+      alert("Booking successfully added to Google Sheets!");
     } catch (error) {
-      console.error('Error adding booking to Google Sheets:', error);
-      alert('Failed to add booking to Google Sheets. Please try again.');
+      console.error("Error adding booking to Google Sheets:", error);
+      alert("Failed to add booking to Google Sheets. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   const inputStyle = {
-    width: '100%',
-    padding: '12px 16px',
-    border: 'none',
-    backgroundColor: 'rgba(60, 47, 47, 0.5)',
-    borderRadius: '10px',
-    fontSize: '14px',
-    transition: 'all 0.3s',
-    outline: 'none',
-    color: 'white',
-    boxSizing: 'border-box'
+    width: "100%",
+    padding: "12px 16px",
+    border: "none",
+    backgroundColor: "rgba(60, 47, 47, 0.5)",
+    borderRadius: "10px",
+    fontSize: "14px",
+    transition: "all 0.3s",
+    outline: "none",
+    color: "white",
+    boxSizing: "border-box",
   };
-  
+
   const labelStyle = {
-    display: 'block',
-    marginBottom: '8px',
-    fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500'
+    display: "block",
+    marginBottom: "8px",
+    fontSize: "14px",
+    color: "rgba(255, 255, 255, 0.8)",
+    fontWeight: "500",
   };
-  
+
   return (
     <div
       style={{
@@ -193,6 +228,29 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
         Create New Booking
       </h3>
 
+      {/* Display derived day and month if from date is selected */}
+      {booking.from && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "12px 16px",
+            backgroundColor: "rgba(139, 111, 71, 0.2)",
+            borderRadius: "8px",
+            border: "1px solid rgba(139, 111, 71, 0.3)",
+          }}
+        >
+          <div style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.7)" }}>
+            Auto-generated from check-in date:
+          </div>
+          <div
+            style={{ fontSize: "16px", fontWeight: "600", marginTop: "4px" }}
+          >
+            Day: {getDayName(booking.from)} | Month:{" "}
+            {getFormattedMonth(booking.from)}
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
         <div
           style={{
@@ -201,30 +259,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
             gap: "20px",
           }}
         >
-          <div>
-            <label style={labelStyle}>Day</label>
-            <input
-              type="text"
-              name="day"
-              value={booking.day}
-              onChange={handleChange}
-              required
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Month</label>
-            <input
-              type="text"
-              name="month"
-              value={booking.month}
-              onChange={handleChange}
-              required
-              style={inputStyle}
-            />
-          </div>
-
           <div>
             <label style={labelStyle}>Client</label>
             <input
@@ -410,8 +444,8 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
             {isSubmitting
               ? "Submitting..."
               : isEditing
-              ? "Update Booking"
-              : "CREATE BOOKING"}
+                ? "Update Booking"
+                : "CREATE BOOKING"}
           </button>
         </div>
       </form>
