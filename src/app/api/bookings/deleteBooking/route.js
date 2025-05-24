@@ -3,7 +3,7 @@ import { google } from 'googleapis';
 
 export async function DELETE(request) {
   try {
-    const { uuid } = await request.json();
+    const { uuid, deletedBy } = await request.json();
     
     if (!uuid) {
       return Response.json({ success: false, error: 'Booking UUID is required' }, { status: 400 });
@@ -45,7 +45,7 @@ export async function DELETE(request) {
       try {
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId,
-          range: `${sheetName}!A2:Q`,
+          range: `${sheetName}!A2:S`, // Updated to include both extra columns
         });
         
         if (response.data.values && response.data.values.length > 0) {
@@ -86,7 +86,75 @@ export async function DELETE(request) {
     
     console.log(`Found booking with UUID ${uuid} in sheet ${foundSheet} at row ${rowIndexToDelete}`);
     
-    // Delete the row from the found sheet
+    // Instead of actually deleting the row, let's move it to a "Deleted" sheet
+    // First, get the row data
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${foundSheet}!A${rowIndexToDelete}:S${rowIndexToDelete}`,
+    });
+    
+    const rowData = response.data.values[0];
+    
+    // Check if "Deleted" sheet exists, if not create it
+    let deletedSheetExists = false;
+    let deletedSheetId = null;
+    
+    for (const sheet of spreadsheetMetadata.data.sheets) {
+      if (sheet.properties.title === "Deleted") {
+        deletedSheetExists = true;
+        deletedSheetId = sheet.properties.sheetId;
+        break;
+      }
+    }
+    
+    if (!deletedSheetExists) {
+      // Create Deleted sheet
+      const addSheetResponse = await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [{
+            addSheet: {
+              properties: {
+                title: "Deleted"
+              }
+            }
+          }]
+        }
+      });
+      
+      deletedSheetId = addSheetResponse.data.replies[0].addSheet.properties.sheetId;
+      
+      // Add headers to Deleted sheet
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: "Deleted!A1:T1",
+        valueInputOption: "RAW",
+        resource: {
+          values: [[
+            "UUID", "Day", "Month", "Client", "Rooms", "Status",
+            "Agent", "From", "To", "Nights", "Voucher", "Safari",
+            "Safari Date", "Arrival", "Contact", "Requests", "Created By", "Edit History",
+            "Deleted By", "Deleted On"
+          ]]
+        }
+      });
+    }
+    
+    // Add the row to Deleted sheet with deletion metadata
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Deleted!A2:T",
+      valueInputOption: "USER_ENTERED",
+      resource: {
+        values: [[
+          ...rowData,
+          deletedBy || "unknown",
+          new Date().toLocaleString()
+        ]]
+      }
+    });
+    
+    // Now delete the original row
     await sheets.spreadsheets.batchUpdate({
       spreadsheetId,
       requestBody: {

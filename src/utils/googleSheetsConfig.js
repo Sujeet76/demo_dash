@@ -223,3 +223,25 @@ export const getStandardizedMonthName = (monthText) => {
   // Return the standardized name or null if not found
   return MONTH_NAME_MAP[normalized] || null;
 };
+
+// Helper functions for user tracking
+export function formatUserAction(username, action, timestamp = null) {
+  const dateTime = timestamp ? new Date(timestamp) : new Date();
+  return `${username || 'unknown'} (${action}) ${dateTime.toLocaleString()}`;
+}
+
+// Function to extract user information from a tracking string
+export function parseUserTracking(trackingString) {
+  if (!trackingString) return { username: 'unknown', timestamp: null };
+  
+  const match = trackingString.match(/^(.*?)\s*\((.*?)\)\s*(.*)$/);
+  if (match) {
+    return {
+      username: match[1].trim(),
+      action: match[2].trim(),
+      timestamp: match[3].trim()
+    };
+  }
+  
+  return { username: trackingString, action: '', timestamp: null };
+}

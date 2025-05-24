@@ -43,7 +43,7 @@ function BookingManager() {
 
   const deleteMutation = useMutation(
     {
-      mutationFn: (uuid) => bookingsApi.deleteBooking(uuid),
+      mutationFn: (data) => bookingsApi.deleteBooking(data.uuid, data.deletedBy),
       onSuccess: () => {
         // Invalidate the query to refetch and get the real data
         queryClient.invalidateQueries(["bookings"]);
@@ -106,8 +106,25 @@ function BookingManager() {
         return;
       }
 
+      // Get user information from localStorage
+      let userIdentifier = 'unknown';
+      try {
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          userIdentifier = userInfo.username || localStorage.getItem('username') || 'unknown';
+        } else if (localStorage.getItem('username')) {
+          userIdentifier = localStorage.getItem('username');
+        }
+      } catch (error) {
+        console.error('Error parsing user info:', error);
+      }
+
       // Execute deletion with react-query mutation
-      await deleteMutation.mutateAsync(bookingToDelete.uuid);
+      await deleteMutation.mutateAsync({
+        uuid: bookingToDelete.uuid,
+        deletedBy: userIdentifier
+      });
     } catch (error) {
       console.error("Error deleting booking:", error);
       alert("An error occurred while deleting the booking. Please try again.");

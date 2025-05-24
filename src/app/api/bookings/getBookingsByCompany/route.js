@@ -28,7 +28,7 @@ export async function GET(request) {
         // Get data from each sheet
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId,
-          range: `${sheetName}!A:Z`,
+          range: `${sheetName}!A:S`, // Updated to include both extra columns
         });
 
         const rows = response.data.values || [];

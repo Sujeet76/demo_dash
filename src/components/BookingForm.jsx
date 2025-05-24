@@ -67,6 +67,21 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
   
   const handleSubmit = async (e) => {
     e.preventDefault();    // Format dates before submitting
+    
+    // Get user information from localStorage
+    let userIdentifier = 'unknown';
+    try {
+      const userInfoStr = localStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        userIdentifier = userInfo.username || localStorage.getItem('username') || 'unknown';
+      } else if (localStorage.getItem('username')) {
+        userIdentifier = localStorage.getItem('username');
+      }
+    } catch (error) {
+      console.error('Error parsing user info:', error);
+    }
+    
     const formattedBooking = {
       ...booking,
       formattedFrom: formatDate(booking.from),
@@ -75,6 +90,10 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       // If editing, keep existing ID and UUID, otherwise generate a new ID
       id: isEditing ? booking.id : Date.now(),
       uuid: isEditing ? booking.uuid : undefined, // Will be generated server-side if undefined
+      // Add user tracking information
+      createdBy: userIdentifier,
+      createdAt: new Date().toISOString(),
+      isEditing: isEditing // Pass the editing flag to the API
     };
 
     // console.log({formattedBooking});

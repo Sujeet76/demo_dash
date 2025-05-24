@@ -16,9 +16,9 @@ const bookingsApi = {
     return data;
   },
 
-  deleteBooking: async (uuid) => {
+  deleteBooking: async (uuid, deletedBy = 'unknown') => {
     const { data } = await axios.delete("/api/bookings/deleteBooking", {
-      data: { uuid },
+      data: { uuid, deletedBy },
     });
 
     if (!data.success) {
@@ -72,6 +72,18 @@ const bookingsApi = {
 
     if (!data.success) {
       throw new Error(data.error || "Failed to fetch bookings for company");
+    }
+
+    return data;
+  },
+
+  getUserTrackingData: async (adminKey) => {
+    const params = { adminKey };
+    
+    const { data } = await axios.get("/api/admin/getUserTrackingData", { params });
+
+    if (!data.success) {
+      throw new Error(data.error || "Failed to fetch user tracking data");
     }
 
     return data;

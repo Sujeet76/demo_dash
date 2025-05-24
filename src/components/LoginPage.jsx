@@ -14,8 +14,17 @@ function LoginPage({ onLogin }) {
     e.preventDefault();
     // Check for specific credentials: admin@123 and 12345
     if (username === 'admin@123' && password === '12345') {
+      const currentTime = new Date().toISOString();
+      const userInfo = {
+        username: username,
+        lastLogin: currentTime,
+        displayName: 'Administrator' // You can customize this with actual user info
+      };
+      
       onLogin(username);
       localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('username', username);
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
     } else {
       setError('Invalid username or password');
     }

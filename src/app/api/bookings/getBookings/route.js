@@ -75,13 +75,14 @@ export async function GET(request) {
       try {
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId,
-          range: `${sheetName}!A2:Q`,
+          range: `${sheetName}!A2:S`, // Updated to include both extra columns
         });
 
         if (response.data.values && response.data.values.length > 0) {
-          // Add sheetName to each row for reference
+          // Add sheetName to each row for reference and exclude the user tracking columns
           const sheetRows = response.data.values.map((row) => {
-            return { sheetName, row };
+            // Slice the row to exclude the last two columns (user tracking data and edit history)
+            return { sheetName, row: row.slice(0, 17) };
           });
           allRows = [...allRows, ...sheetRows];
         }

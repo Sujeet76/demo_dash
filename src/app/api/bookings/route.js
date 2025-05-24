@@ -32,7 +32,7 @@ export async function POST(request) {
       console.log(`Using sheet for month: ${sheetName}`);
     }
 
-    const range = `${sheetName}!A:Q`; // Range for 17 columns (A through Q)
+    const range = `${sheetName}!A:S`; // Range for 19 columns (A through S, including the hidden user columns)
     const bookingId = bookingData.uuid || generateUUID();
 
     // Format the data for Google Sheets
@@ -53,6 +53,16 @@ export async function POST(request) {
       bookingData.arrivalDetails,
       bookingData.guestContactInfo,
       bookingData.specialRequests,
+      // Add hidden user tracking field with timestamp
+      bookingData.isEditing ? 
+        (rows.find(row => row[0] === bookingId)?.[16] || `${bookingData.createdBy || 'unknown'} (${bookingData.createdAt ? new Date(bookingData.createdAt).toLocaleString() : new Date().toLocaleString()})`) : 
+        `${bookingData.createdBy || 'unknown'} (${bookingData.createdAt ? new Date(bookingData.createdAt).toLocaleString() : new Date().toLocaleString()})`,
+      // Add edit history column - append to existing history when editing
+      bookingData.isEditing ? 
+        (rows.find(row => row[0] === bookingId)?.[17] ? 
+          `${rows.find(row => row[0] === bookingId)[17]}; Edited by ${bookingData.createdBy || 'unknown'} on ${new Date().toLocaleString()}` : 
+          `Edited by ${bookingData.createdBy || 'unknown'} on ${new Date().toLocaleString()}`) : 
+        '',
     ];
 
     const auth = await getGoogleSheetsAuth(credentials);
@@ -60,7 +70,7 @@ export async function POST(request) {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${sheetName}!A2:Q`
+      range: `${sheetName}!A2:R`
     });
 
     const rows = response.data.values || [];
@@ -221,7 +231,7 @@ export async function POST(request) {
       if (insertIndex > MAX_GRID_SIZE) {
         await sheets.spreadsheets.values.append({
           spreadsheetId,
-          range: `${sheetName}!A:Q`,
+          range: `${sheetName}!A:R`,
           valueInputOption: "USER_ENTERED",
           insertDataOption: "INSERT_ROWS",
           requestBody: {
@@ -232,7 +242,7 @@ export async function POST(request) {
       } else {
         await sheets.spreadsheets.values.update({
           spreadsheetId,
-          range: `${sheetName}!A${insertIndex}:Q${insertIndex}`,
+          range: `${sheetName}!A${insertIndex}:R${insertIndex}`,
           valueInputOption: "USER_ENTERED",
           requestBody: {
             values: [newRow],
@@ -244,7 +254,7 @@ export async function POST(request) {
       console.error("Error updating/appending values:", error);
       await sheets.spreadsheets.values.append({
         spreadsheetId,
-        range: `${sheetName}!A:Q`,
+        range: `${sheetName}!A:R`,
         valueInputOption: "USER_ENTERED",
         insertDataOption: "INSERT_ROWS",
         requestBody: {
