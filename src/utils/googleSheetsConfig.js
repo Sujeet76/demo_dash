@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import nodeFetch from 'node-fetch';
 
 // Generate a UUID v4
 export function generateUUID() {
@@ -245,3 +246,128 @@ export function parseUserTracking(trackingString) {
   
   return { username: trackingString, action: '', timestamp: null };
 }
+
+/**
+ * Export Google Sheet as PDF
+ * @param {Object} auth - Authenticated Google API client
+ * @param {string} spreadsheetId - ID of the spreadsheet
+ * @param {string} sheetName - Name of the sheet to export (optional)
+ * @returns {Promise<Buffer>} - PDF content as Buffer
+ */
+export const exportSheetAsPDF = async (auth, spreadsheetId, sheetName = null) => {
+  try {
+    console.log(`Starting PDF export for spreadsheet: ${spreadsheetId}, sheet: ${sheetName || 'default'}`);
+    const sheets = google.sheets({ version: 'v4', auth });
+    
+    // Get spreadsheet info to get the default sheet ID if needed
+    let sheetId = 0; // Default to first sheet
+    
+    if (sheetName) {
+      // Get all sheets in the spreadsheet to find the ID of the requested sheet
+      const spreadsheet = await sheets.spreadsheets.get({
+        spreadsheetId,
+        fields: 'sheets.properties'
+      });
+      
+      const targetSheet = spreadsheet.data.sheets.find(
+        sheet => sheet.properties.title === sheetName
+      );
+      
+      if (targetSheet) {
+        sheetId = targetSheet.properties.sheetId;
+      } else {
+        console.warn(`Sheet "${sheetName}" not found, using default sheet`);
+      }
+    }
+    
+    // Export URL format for PDF
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=pdf&gid=${sheetId}`;
+    console.log(`Using export URL: ${exportUrl}`);
+    
+    try {
+      // First, try using Drive API to export the file
+      // If Drive API fails, try a direct fetch to the export URL
+      const response = await nodeFetch(exportUrl, {
+        headers: {
+          Authorization: `Bearer ${(await auth.getAccessToken()).token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.log({response})
+        throw new Error(
+          `Export request failed with status: ${response.status}`
+        );
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      console.log(
+        `PDF export successful via direct fetch, size: ${arrayBuffer.byteLength} bytes`
+      );
+      return Buffer.from(arrayBuffer);
+    } catch (driveError) {
+      console.error('Drive API export failed, trying alternative method...', driveError);
+      
+      throw driveError
+    }
+  } catch (error) {
+    console.error('Error exporting sheet as PDF:', error);
+    throw error;
+  }
+};
+
+/**
+ * Export Google Sheet as Excel
+ * @param {Object} auth - Authenticated Google API client
+ * @param {string} spreadsheetId - ID of the spreadsheet
+ * @returns {Promise<Buffer>} - Excel content as Buffer
+ */
+export const exportSheetAsExcel = async (auth, spreadsheetId) => {
+  try {
+    console.log(`Starting Excel export for spreadsheet: ${spreadsheetId}`);
+    
+    try {
+      // Use Drive API to download the file as Excel
+      const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`;
+      const response = await nodeFetch(exportUrl, {
+        headers: {
+          Authorization: `Bearer ${(await auth.getAccessToken()).token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(
+          `Export request failed with status: ${response.status}`
+        );
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      console.log(
+        `Excel export successful via direct fetch, size: ${arrayBuffer.byteLength} bytes`
+      );
+      return Buffer.from(arrayBuffer);
+    } catch (driveError) {
+      console.error('Drive API export failed, trying alternative method...', driveError);
+      throw driveError;
+    }
+  } catch (error) {
+    console.error('Error exporting sheet as Excel:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get a download link for the original Google Sheet
+ * @param {string} spreadsheetId - ID of the spreadsheet
+ * @returns {string} - URL to access the sheet
+ */
+export const getGoogleSheetViewLink = (spreadsheetId) => {
+  return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/view`;
+};
+
+/**
+ * Get a download link for the Google Sheet as Excel
+ * @param {string} spreadsheetId - ID of the spreadsheet
+ * @returns {string} - URL to download the sheet as Excel
+ */
+export const getGoogleSheetExcelDownloadLink = (spreadsheetId) => {
+  return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`;
+};
