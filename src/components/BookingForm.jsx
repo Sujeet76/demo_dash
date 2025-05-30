@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import EmailSchedulePreview from "./EmailSchedulePreview";
 
-function BookingForm({ onAddBooking, initialBooking, isEditing }) {
-  const [booking, setBooking] = useState(() => {
+function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [booking, setBooking] = useState(() => {
     return (
       initialBooking || {
         client: "",
@@ -17,6 +17,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
         arrivalDetails: "Train",
         guestContactInfo: "",
         specialRequests: "",
+        agentEmail: "",
       }
     );
   });
@@ -128,6 +129,9 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       createdBy: userIdentifier,
       createdAt: new Date().toISOString(),
       isEditing: isEditing, // Pass the editing flag to the API
+      agentEmail: booking.agentEmail
+        ? booking.agentEmail.trim()
+        : booking.guestContactInfo,
     };
 
     // console.log({formattedBooking});
@@ -154,10 +158,38 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       // Update the booking with the returned UUID if it's new
       if (!isEditing && result.uuid) {
         formattedBooking.uuid = result.uuid;
-      }
-
-      // Add to local state
+      }      // Add to local state
       onAddBooking(formattedBooking);
+
+      // // Schedule emails if agent email is provided and it's a new booking
+      // if (!isEditing && formattedBooking.agentEmail && formattedBooking.agentEmail.trim()) {
+      //   try {
+      //     const emailResponse = await fetch("/api/email/schedule", {
+      //       method: "POST",
+      //       headers: {
+      //         "Content-Type": "application/json",
+      //       },
+      //       body: JSON.stringify({
+      //         bookingData: formattedBooking,
+      //         recipientEmail: formattedBooking.agentEmail.trim(),
+      //       }),
+      //     });
+
+      //     const emailResult = await emailResponse.json();
+      //     if (emailResult.success) {
+      //       console.log("Emails scheduled successfully:", emailResult);
+      //       alert(`Booking successfully added to Google Sheets! ${emailResult.scheduledEmails.filter(e => e.success).length} follow-up emails have been scheduled.`);
+      //     } else {
+      //       console.error("Email scheduling failed:", emailResult.error);
+      //       alert("Booking successfully added to Google Sheets! However, email scheduling failed. Please check the agent email address.");
+      //     }
+      //   } catch (emailError) {
+      //     console.error("Error scheduling emails:", emailError);
+      //     alert("Booking successfully added to Google Sheets! However, there was an issue scheduling follow-up emails.");
+      //   }
+      // } else {
+      //   alert("Booking successfully added to Google Sheets!");
+      // }
 
       // Reset the form
       setBooking({
@@ -173,10 +205,9 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
         safariDate: "",
         arrivalDetails: "Train",
         guestContactInfo: "",
-        specialRequests: "",
+        specialRequests: "",       
+        agentEmail: "",
       });
-
-      alert("Booking successfully added to Google Sheets!");
     } catch (error) {
       console.error("Error adding booking to Google Sheets:", error);
       alert("Failed to add booking to Google Sheets. Please try again.");
@@ -226,9 +257,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
         }}
       >
         Create New Booking
-      </h3>
-
-      {/* Display derived day and month if from date is selected */}
+      </h3>      {/* Display derived day and month if from date is selected */}
       {booking.from && (
         <div
           style={{
@@ -250,6 +279,9 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
           </div>
         </div>
       )}
+
+      {/* Email Schedule Preview */}
+      <EmailSchedulePreview fromDate={booking.from} agentEmail={booking.agentEmail} />
 
       <form onSubmit={handleSubmit}>
         <div
@@ -294,9 +326,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
               <option value="Pending">Pending</option>
               <option value="Cancelled">Cancelled</option>
             </select>
-          </div>
-
-          <div>
+          </div>          <div>
             <label style={labelStyle}>Agent</label>
             <input
               type="text"

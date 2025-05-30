@@ -7,6 +7,7 @@ import {
   credentials,
   getStandardizedMonthName,
 } from "@/utils/googleSheetsConfig";
+import { scheduleBookingEmails } from "@/utils/mailersendConfig";
 import { google } from "googleapis";
 
 export async function POST(request) {
@@ -265,6 +266,32 @@ export async function POST(request) {
         "Fallback: Successfully appended row at the end of the sheet"
       );
     }
+
+    console.log({
+      uuid: "booking-123",
+      client: "John Doe",
+      agentName: "Travel Partner",
+      fromDate: bookingData.formattedFrom,
+      toDate: bookingData.formattedTo,
+      formattedFrom: bookingData.formattedFrom,
+      formattedTo: bookingData.formattedTo,
+    });
+
+
+    const scheduledEmails = await scheduleBookingEmails(
+      bookingData.agentEmail,
+      {
+        uuid: bookingId,
+        client: bookingData.client,
+        agentName: bookingData.agentName || "Travel Partner",
+        fromDate: bookingData.formattedFrom,
+        toDate: bookingData.formattedTo,
+        formattedFrom: bookingData.formattedFrom,
+        formattedTo: bookingData.formattedTo,
+      }
+    );
+
+    console.log({ scheduledEmails });
 
     return Response.json({
       success: true,

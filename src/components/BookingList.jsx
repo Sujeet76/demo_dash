@@ -1,6 +1,8 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import EmailDocumentForm from './EmailDocumentForm';
+import { useVirtualizer } from '@tanstack/react-virtual';
+// import { useVirtualizer } from '@tanstack/react-virtual';
 
 function BookingList({ bookings, onDelete, onModify }) {
   const [hoveringModify, setHoveringModify] = useState(null);
@@ -55,6 +57,16 @@ function BookingList({ bookings, onDelete, onModify }) {
   const handleEmailButtonClick = () => {
     setShowEmailForm(true);
   };
+
+  const tableContainerRef = useRef();
+
+    // Set up the virtualizer
+    const rowVirtualizer = useVirtualizer({
+      count: bookings.length,
+      getScrollElement: () => tableContainerRef.current,
+      estimateSize: () => 60, // Estimated row height
+      overscan: 10, // Number of items to render outside of the visible area
+    });
 
   if (bookings.length === 0) {
     return (
@@ -173,7 +185,7 @@ function BookingList({ bookings, onDelete, onModify }) {
         </button>
       </div>
 
-      <div style={{ overflowX: "auto", margin: "20px 0" }}>
+      <div style={{ overflowX: "auto", margin: "20px 0" }} >
         <table
           style={{
             width: "100%",
