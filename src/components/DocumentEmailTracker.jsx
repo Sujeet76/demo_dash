@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
+import {
+  Search,
+  Filter,
+  RotateCcw,
+  FileText,
+  Calendar,
+  User,
+  Mail,
+} from "lucide-react";
 
-/**
- * Component to display document email tracking data for admins
- */
 export default function DocumentEmailTracker({ adminKey }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -95,152 +101,249 @@ export default function DocumentEmailTracker({ adminKey }) {
   }
 
   return (
-    <div className="document-email-tracker">
-      <h2 className="text-xl font-semibold mb-4">Document Email Tracking</h2>
-      
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-      
-      {/* Filters */}
-      <div className="bg-gray-50 p-4 rounded mb-6">
-        <h3 className="text-md font-medium mb-3">Filters</h3>
-        <form onSubmit={handleApplyFilters} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label htmlFor="userId" className="block text-sm font-medium">
-              User ID
-            </label>
-            <input
-              type="text"
-              id="userId"
-              name="userId"
-              value={filters.userId}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
+    <div className="">
+      <div className="max-w-7xl mx-auto">
+        {error && (
+          <div className="bg-gradient-to-r from-red-100 to-pink-100 border-2 border-red-200 rounded-2xl p-6 mb-6 shadow-lg">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-red-200 rounded-full flex items-center justify-center">
+                <span className="text-red-600 font-bold">!</span>
+              </div>
+              <p className="text-red-700 font-medium">{error}</p>
+            </div>
           </div>
-          
-          <div>
-            <label htmlFor="documentType" className="block text-sm font-medium">
-              Document Type
-            </label>
-            <select
-              id="documentType"
-              name="documentType"
-              value={filters.documentType}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Types</option>
-              <option value="excel">Excel</option>
-              <option value="pdf">PDF</option>
-              <option value="doc">Document</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="startDate" className="block text-sm font-medium">
-              Start Date
-            </label>
-            <input
-              type="date"
-              id="startDate"
-              name="startDate"
-              value={filters.startDate}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="endDate" className="block text-sm font-medium">
-              End Date
-            </label>
-            <input
-              type="date"
-              id="endDate"
-              name="endDate"
-              value={filters.endDate}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          
-          <div className="col-span-1 md:col-span-2 lg:col-span-4 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Reset
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Apply Filters
-            </button>
-          </div>
-        </form>
-      </div>
-      
-      {/* Results */}
-      <div className="overflow-x-auto">
-        {loading ? (
-          <div className="text-center py-8">
-            <p className="text-gray-600">Loading tracking data...</p>
-          </div>
-        ) : trackingData.length === 0 ? (
-          <div className="text-center py-8 border rounded">
-            <p className="text-gray-600">No document email tracking data found.</p>
-          </div>
-        ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date/Time
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User ID
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Document
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Recipient
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {trackingData.map((entry) => (
-                <tr key={entry.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(entry.timestamp)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {entry.userId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {entry.documentName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {entry.recipientEmail}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {entry.documentType}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         )}
+
+        {/* Nature-inspired Filters */}
+        <div className="bg-white rounded-3xl p-8 mb-8 shadow-xl border border-green-100">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+              <Filter className="w-5 h-5 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-semibold text-gray-800">
+              Filter the Habitat
+            </h3>
+          </div>
+
+          <form
+            onSubmit={handleApplyFilters}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          >
+            <div className="space-y-2">
+              <label
+                htmlFor="userId"
+                className="flex items-center space-x-2 text-sm font-medium text-gray-700"
+              >
+                <User className="w-4 h-4 text-green-600" />
+                <span>Researcher ID</span>
+              </label>
+              <input
+                type="text"
+                id="userId"
+                name="userId"
+                value={filters.userId}
+                onChange={handleFilterChange}
+                placeholder="Enter researcher ID..."
+                className="w-full px-4 py-3 border-2 border-green-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-green-50/30"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="documentType"
+                className="flex items-center space-x-2 text-sm font-medium text-gray-700"
+              >
+                <FileText className="w-4 h-4 text-green-600" />
+                <span>Document Species</span>
+              </label>
+              <select
+                id="documentType"
+                name="documentType"
+                value={filters.documentType}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-3 border-2 border-green-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-green-50/30"
+              >
+                <option value="">All Species</option>
+                <option value="excel">📊 Data Sheets</option>
+                <option value="pdf">📋 Research Papers</option>
+                <option value="doc">📄 Field Notes</option>
+                <option value="other">📁 Other Materials</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="startDate"
+                className="flex items-center space-x-2 text-sm font-medium text-gray-700"
+              >
+                <Calendar className="w-4 h-4 text-green-600" />
+                <span>Migration Start</span>
+              </label>
+              <input
+                type="date"
+                id="startDate"
+                name="startDate"
+                value={filters.startDate}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-3 border-2 border-green-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-green-50/30"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="endDate"
+                className="flex items-center space-x-2 text-sm font-medium text-gray-700"
+              >
+                <Calendar className="w-4 h-4 text-green-600" />
+                <span>Migration End</span>
+              </label>
+              <input
+                type="date"
+                id="endDate"
+                name="endDate"
+                value={filters.endDate}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-3 border-2 border-green-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-green-50/30"
+              />
+            </div>
+
+            <div className="col-span-1 md:col-span-2 lg:col-span-4 flex justify-end space-x-4 pt-4">
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="flex items-center space-x-2 px-6 py-3 border-2 border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Reset Trail</span>
+              </button>
+              <button
+                type="submit"
+                className="flex items-center space-x-2 px-6 py-3 border-2 border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all"
+              >
+                <Search className="w-4 h-4" />
+                <span>Track Wildlife</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Results with nature theme */}
+        <div className="bg-white rounded-3xl shadow-xl border border-green-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-100 to-emerald-100 px-8 py-6 border-b border-green-200">
+            <h3 className="text-xl font-semibold text-gray-800 flex items-center space-x-3">
+              <div className="w-8 h-8 bg-green-200 rounded-lg flex items-center justify-center">
+                <FileText className="w-4 h-4 text-green-700" />
+              </div>
+              <span>Document Migration Patterns</span>
+            </h3>
+          </div>
+
+          <div className="p-8">
+            {loading ? (
+              <div className="text-center py-16">
+                <div className="inline-flex items-center space-x-3">
+                  <div className="animate-spin w-8 h-8 border-3 border-green-200 border-t-green-600 rounded-full"></div>
+                  <p className="text-gray-600 text-lg">
+                    Tracking wildlife movements...
+                  </p>
+                </div>
+              </div>
+            ) : trackingData.length === 0 ? (
+              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-green-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600 text-lg">
+                  No wildlife tracks found in this area.
+                </p>
+                <p className="text-gray-500 mt-2">
+                  Try adjusting your search filters to expand the habitat range.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="border-b-2 border-green-100">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 bg-green-50/50 rounded-tl-xl">
+                        🕐 Timestamp
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 bg-green-50/50">
+                        👤 Researcher
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 bg-green-50/50">
+                        📋 Document
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 bg-green-50/50">
+                        📧 Recipient
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 bg-green-50/50 rounded-tr-xl">
+                        🏷️ Type
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-green-100">
+                    {trackingData.map((entry, index) => {
+                      const typeInfo = getDocumentTypeInfo(entry.documentType);
+                      return (
+                        <tr
+                          key={entry.id}
+                          className={`hover:bg-green-50/30 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-green-25/20"}`}
+                        >
+                          <td className="px-6 py-5 text-sm text-gray-600">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                              <span>{formatDate(entry.timestamp)}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                                <User className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {entry.userId}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center space-x-3">
+                              <div
+                                className={`w-8 h-8 ${typeInfo.bg} rounded-lg flex items-center justify-center`}
+                              >
+                                <span className="text-sm">{typeInfo.icon}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900 max-w-xs truncate">
+                                {entry.documentName}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center">
+                                <Mail className="w-4 h-4 text-purple-600" />
+                              </div>
+                              <span className="text-sm text-gray-900">
+                                {entry.recipientEmail}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${typeInfo.bg} ${typeInfo.color} border border-current border-opacity-20`}
+                            >
+                              {entry.documentType.toUpperCase()}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
