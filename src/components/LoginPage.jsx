@@ -2,6 +2,21 @@
 
 import { useState } from 'react';
 
+const login = [
+  {
+    username: "@karelJoseph",
+    password: "12345",
+  },
+  {
+    username: "@manraj",
+    password: "12345",
+  },
+  {
+    username: "admin@123",
+    password: "admin@123",
+  }
+];
+
 function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -13,12 +28,18 @@ function LoginPage({ onLogin }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Check for specific credentials: admin@123 and 12345
-    if (username === 'admin@123' && password === '12345') {
+    const isValidLogin = login.some(
+      (user) => user.username === username && user.password === password
+    );
+    if (isValidLogin) {
+      const details = login.find(
+        (user) => user.username === username
+      );
       const currentTime = new Date().toISOString();
       const userInfo = {
-        username: username,
+        username: details.username,
         lastLogin: currentTime,
-        displayName: 'Administrator' // You can customize this with actual user info
+        displayName: details.username // You can customize this with actual user info
       };
       
       onLogin(username);
