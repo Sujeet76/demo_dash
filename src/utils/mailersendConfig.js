@@ -602,11 +602,9 @@ export async function scheduleBookingEmails(recipientEmail, bookingDetails) {
       success: successCount > 0,
       scheduledEmails: results,
       totalEmails: results.length,
-      resendEmails: resendEmails.length,
-      inngestEmails: inngestEmails.length,
       successCount,
       failedCount,
-      message: `Email scheduling completed: ${successCount} scheduled (${resendEmails.length} via Resend, ${inngestEmails.length} via Inngest), ${failedCount} failed`,
+      message: `Email scheduling completed: ${successCount} scheduled, ${failedCount} failed`,
     };
   } catch (error) {
     console.error("💥 Error in scheduleBookingEmails:", error);

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import EmailSchedulePreview from "./EmailSchedulePreview";
 
-function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [booking, setBooking] = useState(() => {
+function BookingForm({ onAddBooking, initialBooking, isEditing }) {
+  const [booking, setBooking] = useState(() => {
     return (
       initialBooking || {
         client: "",
         reqRooms: "",
-        confirm: "Confirmed",
+        confirm: "0",
         agent: "",
         from: "",
         to: "",
@@ -158,7 +159,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
       // Update the booking with the returned UUID if it's new
       if (!isEditing && result.uuid) {
         formattedBooking.uuid = result.uuid;
-      }      // Add to local state
+      } // Add to local state
       onAddBooking(formattedBooking);
 
       // // Schedule emails if agent email is provided and it's a new booking
@@ -205,7 +206,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
         safariDate: "",
         arrivalDetails: "Train",
         guestContactInfo: "",
-        specialRequests: "",       
+        specialRequests: "",
         agentEmail: "",
       });
     } catch (error) {
@@ -257,7 +258,8 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
         }}
       >
         Create New Booking
-      </h3>      {/* Display derived day and month if from date is selected */}
+      </h3>{" "}
+      {/* Display derived day and month if from date is selected */}
       {booking.from && (
         <div
           style={{
@@ -279,10 +281,11 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
           </div>
         </div>
       )}
-
       {/* Email Schedule Preview */}
-      <EmailSchedulePreview fromDate={booking.from} agentEmail={booking.agentEmail} />
-
+      <EmailSchedulePreview
+        fromDate={booking.from}
+        agentEmail={booking.agentEmail}
+      />
       <form onSubmit={handleSubmit}>
         <div
           style={{
@@ -302,7 +305,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               style={inputStyle}
             />
           </div>
-
           <div>
             <label style={labelStyle}>REQ Rooms</label>
             <input
@@ -313,20 +315,17 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               style={inputStyle}
             />
           </div>
-
           <div>
-            <label style={labelStyle}>Confirm</label>
-            <select
+            <label style={labelStyle}>Confirm Rooms</label>
+            <input
+              type="text"
               name="confirm"
               value={booking.confirm}
               onChange={handleChange}
               style={inputStyle}
-            >
-              <option value="Confirmed">Confirmed</option>
-              <option value="Pending">Pending</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </div>          <div>
+            />
+          </div>
+          <div>
             <label style={labelStyle}>Agent</label>
             <input
               type="text"
@@ -336,7 +335,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               style={inputStyle}
             />
           </div>
-
           <div>
             <label style={labelStyle}>From</label>
             <input
@@ -348,7 +346,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               style={inputStyle}
             />
           </div>
-
           <div>
             <label style={labelStyle}>To</label>
             <input
@@ -360,7 +357,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               style={inputStyle}
             />
           </div>
-
           <div>
             <label style={labelStyle}>Nights</label>
             <input
@@ -373,7 +369,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               style={inputStyle}
             />
           </div>
-
           <div>
             <label style={labelStyle}>Voucher No Reconfirm</label>
             <input
@@ -384,7 +379,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               style={inputStyle}
             />
           </div>
-
           <div>
             <label style={labelStyle}>Safari</label>
             <select
@@ -397,7 +391,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               <option value="Yes">Yes</option>
             </select>
           </div>
-
           <div>
             <label style={labelStyle}>Safari Date (dd/mm/yyyy)</label>
             <input
@@ -409,33 +402,28 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {  const [book
               disabled={booking.safari === "No"}
             />
           </div>
-
           <div>
             <label style={labelStyle}>Arrival Details</label>
-            <select
+            <input
+              type="text"
               name="arrivalDetails"
               value={booking.arrivalDetails}
               onChange={handleChange}
               style={inputStyle}
-            >
-              <option value="Train">Train</option>
-              <option value="Surface">Surface</option>
-              <option value="Own">Own</option>
-            </select>
+              placeholder="Train, Surface, Own, etc."
+            />
           </div>
-
           <div>
-            <label style={labelStyle}>Guest Email/Phone</label>
+            <label style={labelStyle}>Guest Email</label>
             <input
               type="text"
               name="guestContactInfo"
               value={booking.guestContactInfo}
               onChange={handleChange}
               style={inputStyle}
-              placeholder="Email or phone number"
+              placeholder="Email"
             />
           </div>
-
           <div style={{ gridColumn: "1 / span 2" }}>
             <label style={labelStyle}>Special Requests</label>
             <textarea
