@@ -386,44 +386,96 @@ export async function POST(request) {
         // Update insert index based on fresh data
         insertIndex = yearBlockStart + 3; // Start after year header (convert to 1-based)
         console.log(`Updated insertIndex to ${insertIndex} after data refresh`);
-      }
-    } else {
+      }    } else {
       // Year block exists, find correct position within it
       insertIndex = yearBlockStart + 3; // Start after year header (convert to 1-based)
       inserted = false;
 
+      // Strategy: Find the correct day group and insert before its TOTAL row
+      let dayGroupStart = -1;
+      let dayGroupEnd = -1;
+      let totalRowIndex = -1;
+
+      // First, find if there's already a group for our target day
       for (let i = yearBlockStart + 1; i <= yearBlockEnd; i++) {
         if (i >= rows.length) break;
 
         const currentRow = rows[i];
-
-        // Skip empty rows or other year headers within the block
         if (!currentRow || !currentRow[2] || currentRow[2].trim() === "") {
           continue;
         }
 
         const rowMonth = currentRow[2];
-        const rowDayParts = rowMonth.split("-");
 
+        // Check if this is a TOTAL row
+        if (rowMonth.toLowerCase().includes("total")) {
+          if (dayGroupStart !== -1) {
+            // We found the end of a day group
+            dayGroupEnd = i - 1;
+            totalRowIndex = i;
+            break;
+          }
+          continue;
+        }
+
+        const rowDayParts = rowMonth.split("-");
         if (rowDayParts.length === 2) {
           const rowDay = parseInt(rowDayParts[0], 10);
 
-          // Primary sort by day number within the year
-          if (dayNumber < rowDay) {
+          if (rowDay === dayNumber) {
+            // Found our target day group
+            if (dayGroupStart === -1) {
+              dayGroupStart = i;
+            }
+          } else if (dayGroupStart !== -1) {
+            // We were in our target day group but now hit a different day
+            dayGroupEnd = i - 1;
+            break;
+          } else if (dayNumber < rowDay) {
+            // Insert before this day since our day comes earlier
             insertIndex = i + 2;
             inserted = true;
+            console.log(`Inserting before day ${rowDay} at row ${i + 2}`);
             break;
-          } else if (dayNumber === rowDay) {
-            // If days are equal, sort by fromDate within the same day
-            if (currentRow.length >= 8 && currentRow[7]) {
-              const rowFromDate = parseFormattedDate(currentRow[7]);
+          }
+        }
+      }
 
-              if (newBookingFromDate < rowFromDate) {
-                insertIndex = i + 2;
-                inserted = true;
-                break;
+      // If we found our target day group
+      if (dayGroupStart !== -1) {
+        if (totalRowIndex !== -1) {
+          // Insert before the TOTAL row
+          insertIndex = totalRowIndex + 2;
+          inserted = true;
+          console.log(`Found day group for ${dayNumber} with TOTAL row, inserting before TOTAL at row ${totalRowIndex + 2}`);
+        } else {
+          // Find the end of the day group and insert there
+          let endOfDayGroup = dayGroupEnd !== -1 ? dayGroupEnd : yearBlockEnd;
+          
+          // Look for the last actual booking entry in this day group
+          for (let i = endOfDayGroup; i >= dayGroupStart; i--) {
+            if (i >= rows.length) continue;
+            const currentRow = rows[i];
+            if (currentRow && currentRow[2] && currentRow[2].trim() !== "" && 
+                !currentRow[2].toLowerCase().includes("total")) {
+              // Sort by fromDate within the same day
+              if (currentRow.length >= 8 && currentRow[7]) {
+                const rowFromDate = parseFormattedDate(currentRow[7]);
+                if (newBookingFromDate >= rowFromDate) {
+                  insertIndex = i + 3; // Insert after this entry
+                  inserted = true;
+                  console.log(`Inserting after booking with date ${currentRow[7]} at row ${i + 3}`);
+                  break;
+                }
               }
             }
+          }
+          
+          // If still not inserted, insert at the beginning of the day group
+          if (!inserted) {
+            insertIndex = dayGroupStart + 2;
+            inserted = true;
+            console.log(`Inserting at beginning of day group for ${dayNumber} at row ${dayGroupStart + 2}`);
           }
         }
       }
@@ -431,6 +483,7 @@ export async function POST(request) {
       // If not inserted yet, place at the end of the year block
       if (!inserted) {
         insertIndex = yearBlockEnd + 3;
+        console.log(`No matching day found, inserting at end of year block at row ${yearBlockEnd + 3}`);
       }
     }
 
