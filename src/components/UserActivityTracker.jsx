@@ -68,7 +68,6 @@ export default function UserActivityTracker({adminKey}) {
       />
 
       <div className="relative space-y-8">
-
         {/* Controls */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-green-100">
           <div className="flex flex-wrap items-center gap-6">
@@ -80,7 +79,9 @@ export default function UserActivityTracker({adminKey}) {
               <RefreshCw
                 className={`w-5 h-5 ${adminDataQuery.isFetching ? "animate-spin" : ""}`}
               />
-              <span>{adminDataQuery.isFetching ? "Tracking..." : "Refresh Wildlife Data"}</span>
+              <span>
+                {adminDataQuery.isFetching ? "Tracking..." : "Refresh Data"}
+              </span>
             </button>
 
             <div className="flex items-center space-x-2 bg-green-50 rounded-2xl px-4 py-3 border border-green-200">
@@ -89,7 +90,7 @@ export default function UserActivityTracker({adminKey}) {
                 type="text"
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                placeholder="Search ranger..."
+                placeholder="Search by admin name..."
                 className="bg-transparent border-none outline-none text-gray-700 placeholder-gray-500 min-w-[150px]"
               />
             </div>
@@ -123,7 +124,7 @@ export default function UserActivityTracker({adminKey}) {
                   <th className="py-4 px-6 text-left font-semibold">
                     <div className="flex items-center space-x-2">
                       <User className="w-5 h-5" />
-                      <span>Ranger</span>
+                      <span>Admin name</span>
                     </div>
                   </th>
                   <th className="py-4 px-6 text-left font-semibold">
@@ -135,13 +136,13 @@ export default function UserActivityTracker({adminKey}) {
                   <th className="py-4 px-6 text-left font-semibold">
                     <div className="flex items-center space-x-2">
                       <Monitor className="w-5 h-5" />
-                      <span>Station</span>
+                      <span>Guest name</span>
                     </div>
                   </th>
                   <th className="py-4 px-6 text-left font-semibold">
                     <div className="flex items-center space-x-2">
                       <FileText className="w-5 h-5" />
-                      <span>Log</span>
+                      <span>Sheet Name</span>
                     </div>
                   </th>
                   <th className="py-4 px-6 text-left font-semibold">
@@ -159,7 +160,7 @@ export default function UserActivityTracker({adminKey}) {
                       <div className="flex flex-col items-center space-y-4">
                         <div className="text-6xl">🦉</div>
                         <p className="text-gray-600 text-lg">
-                          {mockData?.length === 0
+                          {filteredData?.length === 0
                             ? "Click 'Refresh Wildlife Data' to start tracking"
                             : "No matching activities found in the sanctuary"}
                         </p>

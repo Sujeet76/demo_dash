@@ -44,10 +44,25 @@ export async function POST(request) {
     } else if (bookingData.formattedTo) {
       const toDate = parseFormattedDate(bookingData.formattedTo);
       bookingYear = toDate.getFullYear();
-    }
-
-    const auth = await getGoogleSheetsAuth(credentials);
+    }    const auth = await getGoogleSheetsAuth(credentials);
     const sheets = google.sheets({ version: "v4", auth });
+
+    // Get spreadsheet metadata for sheet operations (needed early for delete operations)
+    const spreadsheetMetadata = await sheets.spreadsheets.get({
+      spreadsheetId,
+    });
+
+    // console.log(`Spreadsheet metadata retrieved for ID: ${spreadsheetId}`);
+    console.log({spreadsheetMetadata});
+
+    let sheetId = null;
+    for (const sheet of spreadsheetMetadata.data.sheets) {
+      if (sheet.properties.title === sheetName) {
+        sheetId = sheet.properties.sheetId;
+        break;
+      }
+    }
+    console.log(`Found sheet ID: ${sheetId} for sheet: ${sheetName}`);
 
     // Get fresh data from sheets
     const response = await sheets.spreadsheets.values.get({
@@ -57,9 +72,64 @@ export async function POST(request) {
 
     let rows = response.data.values || [];
 
+    // If this is an edit operation, find and remove the existing record first
+    if (bookingData.isEditing && bookingData.uuid) {
+      console.log(`Editing mode: Looking for existing record with UUID ${bookingData.uuid}`);
+      
+      let existingRowIndex = -1;
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i][0] === bookingData.uuid) {
+          existingRowIndex = i;
+          console.log(`Found existing record at row ${i + 2} (sheet row ${i + 2})`);
+          break;
+        }
+      }
+
+      if (existingRowIndex !== -1) {
+        // Remove the existing row from the sheet
+        const sheetRowIndex = existingRowIndex + 2; // Convert to 1-based sheet row
+        
+        try {          await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+              requests: [
+                {
+                  deleteDimension: {
+                    range: {
+                      sheetId: sheetId,
+                      dimension: "ROWS",
+                      startIndex: sheetRowIndex - 1, // Convert to 0-based
+                      endIndex: sheetRowIndex,
+                    },
+                  },
+                },
+              ],
+            },
+          });
+          
+          // Remove from our local array as well
+          rows.splice(existingRowIndex, 1);
+          console.log(`Successfully removed existing record from row ${sheetRowIndex}`);
+        } catch (error) {
+          console.warn(`Could not delete existing row: ${error.message}`);
+          // Continue with the operation - worst case we'll have a duplicate temporarily
+        }
+        
+        // Refresh the data after deletion to ensure accurate row indexing
+        const refreshResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `${sheetName}!A2:R`,
+        });
+        rows = refreshResponse.data.values || [];
+        console.log("Refreshed sheet data after deleting existing record");
+      } else {
+        console.log(`No existing record found with UUID ${bookingData.uuid}`);
+      }
+    }
+
     // Format the data for Google Sheets
     const newRow = [
-      bookingId, // First column is UUID
+      bookingId,
       bookingData.day,
       bookingData.month,
       bookingData.client,
@@ -78,13 +148,13 @@ export async function POST(request) {
       // Add hidden user tracking field with timestamp
       bookingData.isEditing
         ? rows.find((row) => row[0] === bookingId)?.[16] ||
-          `${bookingData.createdBy || "unknown"} (${bookingData.createdAt ? new Date(bookingData.createdAt).toLocaleString() : new Date().toLocaleString()})`
-        : `${bookingData.createdBy || "unknown"} (${bookingData.createdAt ? new Date(bookingData.createdAt).toLocaleString() : new Date().toLocaleString()})`,
+          `${bookingData.createdBy || "unknown"} (${bookingData.createdAt ? bookingData.createdAt : new Date().toISOString()})`
+        : `${bookingData.createdBy || "unknown"} (${bookingData.createdAt ? bookingData.createdAt : new Date().toISOString()})`,
       // Add edit history column - append to existing history when editing
       bookingData.isEditing
         ? rows.find((row) => row[0] === bookingId)?.[17]
-          ? `${rows.find((row) => row[0] === bookingId)[17]}; Edited by ${bookingData.createdBy || "unknown"} on ${new Date().toLocaleString()}`
-          : `Edited by ${bookingData.createdBy || "unknown"} on ${new Date().toLocaleString()}`
+          ? `${rows.find((row) => row[0] === bookingId)[17]}; ${bookingData.createdBy || "unknown"} edited on ${new Date().toISOString()}`
+          : `${bookingData.createdBy || "unknown"} edited on ${new Date().toISOString()}`
         : "",
     ];
 
@@ -154,21 +224,7 @@ export async function POST(request) {
           yearBlockEnd = i - 1;
           break;
         }
-      }
-    }
-
-    // Get spreadsheet metadata for sheet operations
-    const spreadsheetMetadata = await sheets.spreadsheets.get({
-      spreadsheetId,
-    });
-
-    let sheetId = null;
-    for (const sheet of spreadsheetMetadata.data.sheets) {
-      if (sheet.properties.title === sheetName) {
-        sheetId = sheet.properties.sheetId;
-        break;
-      }
-    }
+      }    }
 
     // If no year block found, insert year header at the correct chronological position
     if (yearBlockStart === -1) {

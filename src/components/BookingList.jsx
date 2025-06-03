@@ -8,6 +8,23 @@ function BookingList({ bookings, onDelete, onModify }) {
   const [hoveringModify, setHoveringModify] = useState(null);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [csvContent, setCsvContent] = useState('');
+  const [isPending, setIsPending] = useState({
+    delete: false,
+    id: null,
+  });
+  const handleDelete = async (id, uuid) => {
+    try {
+      setIsPending({ delete: true, id });
+      if (window.confirm("Are you sure you want to delete this booking?")) {
+        await onDelete(id, uuid);
+      }
+      setIsPending({ delete: false, id: null });
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+    }finally{
+      setIsPending({ delete: false, id: null });
+    }
+  };
   console.log({ bookings });
 
   // Function to convert bookings to CSV format
@@ -44,6 +61,7 @@ function BookingList({ bookings, onDelete, onModify }) {
     
     return csvContent;
   };
+
 
   // Generate CSV content when bookings change
   useEffect(() => {
@@ -185,7 +203,7 @@ function BookingList({ bookings, onDelete, onModify }) {
         </button>
       </div>
 
-      <div style={{ overflowX: "auto", margin: "20px 0" }} >
+      <div style={{ overflowX: "auto", margin: "20px 0" }}>
         <table
           style={{
             width: "100%",
@@ -534,6 +552,9 @@ function BookingList({ bookings, onDelete, onModify }) {
                 <td style={{ padding: "14px 12px" }}>
                   <div style={{ display: "flex", gap: "8px" }}>
                     <button
+                      disabled={isPending.delete}
+                      className={
+                        isPending.delete}
                       onClick={() => onModify(booking)}
                       onMouseEnter={() => setHoveringModify(booking.id)}
                       onMouseLeave={() => setHoveringModify(null)}
@@ -560,14 +581,21 @@ function BookingList({ bookings, onDelete, onModify }) {
                       Modify
                     </button>{" "}
                     <button
+                      disabled={isPending.delete && isPending.id === booking.id}
+                      className={
+                        isPending.delete && isPending.id === booking.id
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }
                       onClick={() => {
-                        if (
-                          window.confirm(
-                            "Are you sure you want to delete this booking?"
-                          )
-                        ) {
-                          onDelete(booking.id, booking.uuid);
-                        }
+                        // if (
+                        //   window.confirm(
+                        //     "Are you sure you want to delete this booking?"
+                        //   )
+                        // ) {
+                        //   onDelete(booking.id, booking.uuid);
+                        // }
+                        handleDelete(booking.id, booking.uuid);
                       }}
                       style={{
                         padding: "6px 12px",
@@ -583,7 +611,11 @@ function BookingList({ bookings, onDelete, onModify }) {
                         boxShadow: "0 2px 8px rgba(183, 28, 28, 0.3)",
                       }}
                     >
-                      Delete
+                      {isPending.delete && isPending.id === booking.id ? (
+                        <span>Deleting...</span>
+                      ) : (
+                        <span>Delete</span>
+                      )}
                     </button>
                   </div>
                 </td>

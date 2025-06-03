@@ -1,6 +1,27 @@
 import { useState, useEffect } from "react";
 import EmailSchedulePreview from "./EmailSchedulePreview";
 
+const inputStyle = {
+  width: "100%",
+  padding: "12px 16px",
+  border: "none",
+  backgroundColor: "rgba(60, 47, 47, 0.5)",
+  borderRadius: "10px",
+  fontSize: "14px",
+  transition: "all 0.3s",
+  outline: "none",
+  color: "white",
+  boxSizing: "border-box",
+};
+
+const labelStyle = {
+  display: "block",
+  marginBottom: "8px",
+  fontSize: "14px",
+  color: "rgba(255, 255, 255, 0.8)",
+  fontWeight: "500",
+};
+
 function BookingForm({ onAddBooking, initialBooking, isEditing }) {
   const [booking, setBooking] = useState(() => {
     return (
@@ -22,6 +43,8 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       }
     );
   });
+
+  console.log("BookingForm initial state:", booking);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update booking when initialBooking prop changes
@@ -135,7 +158,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       // Add user tracking information
       createdBy: userIdentifier,
       createdAt: new Date().toISOString(),
-      isEditing: isEditing, // Pass the editing flag to the API
+      isEditing: isEditing,
       agentEmail: booking.agentEmail
         ? booking.agentEmail.trim()
         : booking.guestContactInfo,
@@ -202,7 +225,7 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       setBooking({
         client: "",
         reqRooms: "",
-        confirm: "Confirmed",
+        confirm: "0",
         agent: "",
         from: "",
         to: "",
@@ -221,27 +244,6 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "12px 16px",
-    border: "none",
-    backgroundColor: "rgba(60, 47, 47, 0.5)",
-    borderRadius: "10px",
-    fontSize: "14px",
-    transition: "all 0.3s",
-    outline: "none",
-    color: "white",
-    boxSizing: "border-box",
-  };
-
-  const labelStyle = {
-    display: "block",
-    marginBottom: "8px",
-    fontSize: "14px",
-    color: "rgba(255, 255, 255, 0.8)",
-    fontWeight: "500",
   };
 
   return (

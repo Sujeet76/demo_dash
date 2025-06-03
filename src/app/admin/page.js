@@ -22,7 +22,7 @@ export default function AdminPage() {
     }
   }, []);
 
-  const handleLogin = (username, password) => {
+  const handleLogin = () => {
     setIsLoggedIn(true);
     const key = process.env.NEXT_PUBLIC_ADMIN_KEY || "your_secret_key";
     setAdminKey(key);
@@ -62,7 +62,7 @@ export default function AdminPage() {
                   onChange={(e) => setAdminKey(e.target.value)}
                   placeholder="Enter your ranger key..."
                   className="w-full pl-12 pr-4 py-4 border-2 border-green-200 rounded-2xl focus:border-green-500 focus:outline-none transition-all duration-300 bg-white/90 backdrop-blur-sm"
-                  onKeyPress={(e) => e.key === "Enter" && handleAdminLogin(e)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin(e)}
                 />
               </div>
 
@@ -112,7 +112,7 @@ export default function AdminPage() {
                   }`}
                 >
                   <Activity className="w-5 h-5" />
-                  <span>Ranger Activity</span>
+                  <span>Admin Activity</span>
                   {activeTab === "user-activity" && (
                     <Bird className="w-4 h-4" />
                   )}
@@ -120,11 +120,12 @@ export default function AdminPage() {
 
                 <button
                   onClick={() => setActiveTab("document-emails")}
-                  className={`flex items-center space-x-3 px-6 py-4 rounded-2xl font-semibold transition-all duration-300 ${
+                  className={`flex items-center space-x-3 disabled:opacity-60 disabled:cursor-none px-6 py-4 rounded-2xl font-semibold transition-all duration-300 ${
                     activeTab === "document-emails"
                       ? "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg transform scale-105"
                       : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"
                   }`}
+                  disabled
                 >
                   <Mail className="w-5 h-5" />
                   <span>Document Communications</span>

@@ -13,7 +13,7 @@ export async function GET(request) {
     const adminKey = searchParams.get("adminKey");
     
     // Simple adminKey check (replace with proper auth in production)
-    if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+    if (adminKey !== process.env.NEXT_PUBLIC_ADMIN_KEY) {
       return Response.json(
         { success: false, error: "Unauthorized access" },
         { status: 401 }
@@ -53,7 +53,7 @@ export async function GET(request) {
                   client: row[3],
                   actionType: 'created',
                   trackingInfo: createdByInfo,
-                  parsedInfo: parseUserTracking(createdByInfo)
+                  parsedInfo: parseUserTracking(createdByInfo,"created")
                 });
               }
               
@@ -70,7 +70,7 @@ export async function GET(request) {
                       client: row[3],
                       actionType: 'edited',
                       trackingInfo: edit,
-                      parsedInfo: parseUserTracking(edit)
+                      parsedInfo: parseUserTracking(edit, "edited")
                     });
                   }
                 });
@@ -96,7 +96,7 @@ export async function GET(request) {
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
           if (row.length >= 19) {
-            const createdByInfo = row[16] || '';
+            // const createdByInfo = row[16] || '';
             const deletedBy = row[18] || '';
             const deletedOn = row[19] || '';
             
@@ -110,7 +110,8 @@ export async function GET(request) {
                 trackingInfo: `${deletedBy} deleted on ${deletedOn}`,
                 parsedInfo: {
                   username: deletedBy,
-                  timestamp: deletedOn
+                  timestamp: deletedOn,
+                  action: 'deleted',
                 }
               });
             }

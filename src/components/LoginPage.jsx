@@ -114,7 +114,7 @@ function LoginPage({ onLogin }) {
             </svg>
           </div>
           <h1 style={{ fontSize: '22px', margin: 0, fontWeight: '600' }}>
-            Hotel Booking Manager
+            Ranthambore Regency Booking
           </h1>
         </div>
         <nav>

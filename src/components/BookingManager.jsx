@@ -8,6 +8,7 @@ import SearchBar from "./SearchBar";
 import ExportButton from "./ExportButton";
 import { bookingsApi } from "@/utils/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 
 
 function BookingManager() {
@@ -131,8 +132,28 @@ function BookingManager() {
     }
   };
 
+  function convertDateFormat(dateStr) {
+    if (!dateStr) return "";
+    const parts = dateStr.split("/");
+    if (parts.length !== 3) return dateStr;
+    // Convert DD/MM/YYYY to YYYY-MM-DD
+    return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+  }
+
   const modifyBooking = (booking) => {
-    setCurrentBooking(booking);
+    setCurrentBooking({
+      ...booking,
+      from: booking.formattedFrom
+        ? convertDateFormat(booking.formattedFrom)
+        : undefined,
+      to: booking.formattedTo
+        ? convertDateFormat(booking.formattedTo)
+        : undefined,
+      safariDate: booking.formattedSafariDate
+        ? convertDateFormat(booking.formattedSafariDate)
+        : undefined,
+      safari: booking.formattedSafariDate ? "Yes" : "No",
+    });
     setIsEditing(true);
     setShowForm(true);
   };
@@ -207,13 +228,17 @@ function BookingManager() {
               position: "relative",
             }}
           >
-            <svg width="40" height="40" viewBox="0 0 40 40">
-              <path d="M20 5 L30 30 L10 30 Z" fill="#8b6f47" />
-              <path d="M20 8 L28 28 L12 28 Z" fill="#1e1a1a" />
-            </svg>
+            <Image
+              src="/logo_r-128.png"
+              alt="Logo"
+              width={60}
+              height={40}
+              // style={{ borderRadius: "50%" }}
+              className="object-contain"
+            />
           </div>
           <h1 style={{ fontSize: "22px", margin: 0, fontWeight: "600" }}>
-            Hotel Booking Manager
+            Ranthambore Regency Booking
           </h1>
         </div>
         <nav>

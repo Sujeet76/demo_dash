@@ -232,19 +232,36 @@ export function formatUserAction(username, action, timestamp = null) {
 }
 
 // Function to extract user information from a tracking string
-export function parseUserTracking(trackingString) {
+export function parseUserTracking(trackingString, action = '') {
   if (!trackingString) return { username: 'unknown', timestamp: null };
   
   const match = trackingString.match(/^(.*?)\s*\((.*?)\)\s*(.*)$/);
-  if (match) {
+  if(action === "created" ) {
+    if (match) {
+      return {
+        username: match[1].trim(),
+        timestamp: match[2].trim(),
+        action: action || match[3].trim(),
+      };
+    }
+  }
+
+  // This regex now handles formats like "@karelJoseph edited on 4/6/2025, 1:11:08 am"
+  const actionMatch = trackingString.match(/^(.*?)\s*(edited on|created on|updated on|deleted on|viewed on|created|updated|edited|deleted|viewed|\(.*?\))\s*(.*)$/i);
+  
+  if (actionMatch) {
+    const username = actionMatch[1].trim();
+    let detectedAction = actionMatch[2].trim();
+    let timestamp = actionMatch[3].trim();
+    
     return {
-      username: match[1].trim(),
-      action: match[2].trim(),
-      timestamp: match[3].trim()
+      username: username,
+      action: action || detectedAction,
+      timestamp: timestamp
     };
   }
-  
-  return { username: trackingString, action: '', timestamp: null };
+
+  return { username: trackingString, action: action || '', timestamp: null };
 }
 
 /**
