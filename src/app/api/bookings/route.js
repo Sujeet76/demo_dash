@@ -312,11 +312,62 @@ export async function POST(request) {
           requestBody: {
             values: [yearHeaderRow],
           },
-        });
-
-        console.log(
+        });        console.log(
           `Successfully inserted year header for ${bookingYear} at row ${yearInsertIndex}`
         );
+
+        // Apply styling to the newly inserted year header
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [
+              {
+                repeatCell: {
+                  range: {
+                    sheetId: sheetId,
+                    startRowIndex: yearInsertIndex - 1, // The year header row
+                    endRowIndex: yearInsertIndex,       // Only this single row
+                    startColumnIndex: 0,               // Start from column A
+                    endColumnIndex: 18,                // Through column R
+                  },
+                  cell: {
+                    userEnteredFormat: {
+                      backgroundColor: {
+                        red: 1.0,
+                        green: 1.0,
+                        blue: 0.0, // Yellow background
+                      },
+                      textFormat: {
+                        bold: true,
+                        foregroundColor: {
+                          red: 0.0,
+                          green: 0.0,
+                          blue: 0.0, // Black text
+                        },
+                      },
+                    },
+                  },
+                  fields: "userEnteredFormat(backgroundColor,textFormat)",
+                },
+              },
+              {
+                updateDimensionProperties: {
+                  range: {
+                    sheetId: sheetId,
+                    dimension: "ROWS",
+                    startIndex: yearInsertIndex - 1,
+                    endIndex: yearInsertIndex,
+                  },
+                  properties: {
+                    pixelSize: 30, // Larger row height
+                  },
+                  fields: "pixelSize",
+                },
+              },
+            ],
+          },
+        });
+        console.log(`Applied yellow background, bold text, and larger height to year header at row ${yearInsertIndex}`);
 
         insertIndex = yearInsertIndex + 1;
       } catch (error) {
@@ -329,9 +380,62 @@ export async function POST(request) {
           requestBody: {
             values: [yearHeaderRow],
           },
+        });        console.log("Appended year header at the end of sheet");
+        const appendedRowIndex = rows.length + 2; // The row where it was appended
+        
+        // Apply styling to the appended year header
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [
+              {
+                repeatCell: {
+                  range: {
+                    sheetId: sheetId,
+                    startRowIndex: appendedRowIndex - 1, // The year header row (0-based)
+                    endRowIndex: appendedRowIndex,       // Only this single row
+                    startColumnIndex: 0,                // Start from column A
+                    endColumnIndex: 18,                 // Through column R
+                  },
+                  cell: {
+                    userEnteredFormat: {
+                      backgroundColor: {
+                        red: 1.0,
+                        green: 1.0,
+                        blue: 0.0, // Yellow background
+                      },
+                      textFormat: {
+                        bold: true,
+                        foregroundColor: {
+                          red: 0.0,
+                          green: 0.0,
+                          blue: 0.0, // Black text
+                        },
+                      },
+                    },
+                  },
+                  fields: "userEnteredFormat(backgroundColor,textFormat)",
+                },
+              },
+              {
+                updateDimensionProperties: {
+                  range: {
+                    sheetId: sheetId,
+                    dimension: "ROWS",
+                    startIndex: appendedRowIndex - 1,
+                    endIndex: appendedRowIndex,
+                  },
+                  properties: {
+                    pixelSize: 30, // Larger row height
+                  },
+                  fields: "pixelSize",
+                },
+              },
+            ],
+          },
         });
-
-        console.log("Appended year header at the end of sheet");
+        console.log(`Applied yellow background, bold text, and larger height to appended year header at row ${appendedRowIndex}`);
+        
         insertIndex = rows.length + 3;
       } // Update yearBlockStart and yearBlockEnd to reflect the new positions
       yearBlockStart = yearInsertIndex - 2; // Adjust for 0-based indexing
@@ -628,9 +732,7 @@ export async function POST(request) {
         `Insert index ${insertIndex} exceeds grid size limit, appending to end instead`
       );
       insertIndex = rows.length + 2;
-    }
-
-    // Insert booking data WITHOUT any styling
+    }    // Insert booking data with transparent background styling from column 2
     try {
       if (insertIndex > MAX_GRID_SIZE) {
         await sheets.spreadsheets.values.append({
@@ -655,10 +757,65 @@ export async function POST(request) {
           },
         });
         console.log(
-          `Successfully inserted booking data at row ${insertIndex} without styling`
+          `Successfully inserted booking data at row ${insertIndex}`
         );
-      }
-    } catch (error) {
+      }      // Apply transparent background styling from column 2 onwards with black text for entire row
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            {
+              // First apply black text to the entire row (columns A through R)
+              repeatCell: {
+                range: {
+                  sheetId: sheetId,
+                  startRowIndex: insertIndex - 1, // The booking row
+                  endRowIndex: insertIndex,       // Only this single row
+                  startColumnIndex: 0,           // Start from column A (index 0)
+                  endColumnIndex: 18,            // Through column R
+                },
+                cell: {
+                  userEnteredFormat: {
+                    textFormat: {
+                      foregroundColor: {
+                        red: 0.0,
+                        green: 0.0,
+                        blue: 0.0, // Black text
+                      },
+                    },
+                  },
+                },
+                fields: "userEnteredFormat.textFormat",
+              },
+            },
+            {
+              // Then apply transparent background from column B onwards
+              repeatCell: {
+                range: {
+                  sheetId: sheetId,
+                  startRowIndex: insertIndex - 1, // The booking row
+                  endRowIndex: insertIndex,       // Only this single row
+                  startColumnIndex: 1,           // Start from column B (index 1)
+                  endColumnIndex: 18,            // Through column R
+                },
+                cell: {
+                  userEnteredFormat: {
+                    backgroundColor: {
+                      red: 1.0,
+                      green: 1.0,
+                      blue: 1.0,
+                      alpha: 0.0, // Transparent background
+                    },
+                  },
+                },
+                fields: "userEnteredFormat.backgroundColor",
+              },
+            },
+          ],
+        },
+      });
+      console.log(`Applied black text to entire row and transparent background from column B onwards to booking row ${insertIndex}`);
+    }catch (error) {
       console.error("Error updating/appending values:", error);
       await sheets.spreadsheets.values.append({
         spreadsheetId,
@@ -674,7 +831,9 @@ export async function POST(request) {
       );
     }
 
-    await scheduleBookingEmails(bookingData.agentEmail, {
+    // Check if agentEmail is valid before scheduling emails
+    if (bookingData.agentEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingData.agentEmail)) {
+      await scheduleBookingEmails(bookingData.agentEmail, {
       uuid: bookingId,
       client: bookingData.client,
       agentName: bookingData.agentName || "Travel Partner",
@@ -682,7 +841,11 @@ export async function POST(request) {
       toDate: bookingData.formattedTo,
       formattedFrom: bookingData.formattedFrom,
       formattedTo: bookingData.formattedTo,
-    });
+      });
+      console.log(`Scheduled booking email for ${bookingData.agentEmail}`);
+    } else {
+      console.log("No valid agent email provided, skipping email scheduling");
+    }
 
     return Response.json({
       success: true,

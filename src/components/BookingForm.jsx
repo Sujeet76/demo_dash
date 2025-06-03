@@ -62,6 +62,14 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
     return `${date.getDate()}-${months[date.getMonth()]}`;
   };
 
+  function calculateNights(startDateStr, endDateStr) {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    const diffTime = endDate - startDate;
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return diffDays;
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setBooking((prev) => ({
@@ -69,14 +77,12 @@ function BookingForm({ onAddBooking, initialBooking, isEditing }) {
       [name]: value,
     }));
 
-    // Auto-calculate nights when from and to dates are selected
     if (name === "from" || name === "to") {
       if (booking.from && e.target.value) {
         const fromDate =
           name === "from" ? new Date(value) : new Date(booking.from);
         const toDate = name === "to" ? new Date(value) : new Date(booking.to);
-        const timeDiff = toDate.getTime() - fromDate.getTime();
-        const nightCount = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        const nightCount = calculateNights(fromDate, toDate);
 
         if (nightCount > 0) {
           setBooking((prev) => ({
