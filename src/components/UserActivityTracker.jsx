@@ -18,6 +18,7 @@ import {
   FileText,
   Hash,
 } from "lucide-react";
+import { PercentIcon } from 'lucide-react';
 
 
 export default function UserActivityTracker({adminKey}) {
@@ -129,6 +130,12 @@ export default function UserActivityTracker({adminKey}) {
                   </th>
                   <th className="py-4 px-6 text-left font-semibold">
                     <div className="flex items-center space-x-2">
+                      <PercentIcon className="w-5 h-5" />
+                      <span>Total entries</span>
+                    </div>
+                  </th>
+                  <th className="py-4 px-6 text-left font-semibold">
+                    <div className="flex items-center space-x-2">
                       <Clock className="w-5 h-5" />
                       <span>Timestamp</span>
                     </div>
@@ -204,6 +211,10 @@ export default function UserActivityTracker({adminKey}) {
                             {item.parsedInfo?.username || "Unknown"}
                           </span>
                         </div>
+                      </td>
+                      
+                      <td className="py-4 px-6 text-gray-600 font-mono text-sm">
+                        {item.count || "N/A"}
                       </td>
                       <td className="py-4 px-6 text-gray-600 font-mono text-sm">
                         {formatDate(item.parsedInfo?.timestamp)}

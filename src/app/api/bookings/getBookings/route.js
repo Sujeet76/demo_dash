@@ -189,8 +189,8 @@ export async function GET(request) {
         safari: row[11] || "No",
         formattedSafariDate: row[12] || "",
         arrivalDetails: row[13] || "",
-        guestContactInfo: row[14] || "",
-        specialRequests: row[15] || "",
+        guestContactInfo: row[15] || "",
+        specialRequests: row[16] || "",
         toDate: parseFormattedDate(row[8] || ""),
       };
     });

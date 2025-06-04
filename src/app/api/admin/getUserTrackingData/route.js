@@ -42,8 +42,8 @@ export async function GET(request) {
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             if (row.length >= 17) {
-              const createdByInfo = row[16] || '';
-              const editHistory = row[17] || '';
+              const createdByInfo = row[17] || '';
+              const editHistory = row[18] || '';
               
               if (createdByInfo) {
                 allTrackedActions.push({
@@ -96,7 +96,6 @@ export async function GET(request) {
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
           if (row.length >= 19) {
-            // const createdByInfo = row[16] || '';
             const deletedBy = row[18] || '';
             const deletedOn = row[19] || '';
             
@@ -123,15 +122,32 @@ export async function GET(request) {
     }
     
     // Sort by timestamp (newest first)
+    // Sort by timestamp (newest first)
     allTrackedActions.sort((a, b) => {
       const timeA = a.parsedInfo.timestamp ? new Date(a.parsedInfo.timestamp).getTime() : 0;
       const timeB = b.parsedInfo.timestamp ? new Date(b.parsedInfo.timestamp).getTime() : 0;
       return timeB - timeA;
     });
     
+    // Group by UUID and add count
+    const uuidGroups = {};
+    allTrackedActions.forEach(action => {
+      if (!uuidGroups[action.uuid]) {
+      uuidGroups[action.uuid] = {
+        ...action,
+        count: 1
+      };
+      } else {
+      uuidGroups[action.uuid].count++;
+      }
+    });
+    
+    // Convert back to array
+    const groupedActions = Object.values(uuidGroups);
+    
     return Response.json({
       success: true,
-      trackingData: allTrackedActions
+      trackingData: groupedActions
     });
   } catch (error) {
     console.error("Error fetching user tracking data:", error);

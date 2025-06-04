@@ -10,7 +10,7 @@ export function generateUUID() {
   });
 }
 
-// Month names in order
+// Month names in order (matching your sheet names)
 export const MONTH_NAMES = [
   "Jan", "Feb", "March", "April", "May", "June", 
   "July", "Aug", "Sep", "Oct", "Nov", "Dec"
