@@ -18,20 +18,18 @@ export async function DELETE(request) {
     const spreadsheetMetadata = await sheets.spreadsheets.get({
       spreadsheetId
     });    // Using our shared MONTH_NAMES constant
-    
-    // Check each month sheet and Sheet1 for the booking
+      // Check each month sheet and Sheet1 for the booking
     const sheetsToCheck = [...MONTH_NAMES, "Sheet1"];
     
-    let foundSheet = null;
-    let rowIndexToDelete = -1;
+    let foundEntries = []; // Will store all matching entries
     let foundSheetId = null;
     
-    // Search in each sheet for the UUID
+    // Search in each sheet for the UUID (including multi-day entries)
     for (const sheetName of sheetsToCheck) {
       try {
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId,
-          range: `${sheetName}!A2:S`, // Updated to include both extra columns
+          range: `${sheetName}!A2:T`, // Updated to include day index column
         });
         
         if (response.data.values && response.data.values.length > 0) {
@@ -41,21 +39,28 @@ export async function DELETE(request) {
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             if (row && row.length > 0 && row[0] === uuid) {
-              rowIndexToDelete = i + 2; // +2 because we start at row 2 and Google Sheets is 1-indexed
-              foundSheet = sheetName;
+              // Found an entry with matching base UUID
+              foundEntries.push({
+                sheetName: sheetName,
+                rowIndex: i + 2, // +2 because we start at row 2 and Google Sheets is 1-indexed
+                rowData: row,
+                dayIndex: row[19] || 0 // Day index from column T (index 19)
+              });
+              console.log(
+                `Found booking entry at row ${i + 2} in ${sheetName} (day index: ${row[19] || 0})`
+              );
               
-              // Find the sheet ID for this sheet
-              for (const sheet of spreadsheetMetadata.data.sheets) {
-                if (sheet.properties.title === sheetName) {
-                  foundSheetId = sheet.properties.sheetId;
-                  break;
+              // Find the sheet ID for this sheet if not already found
+              if (!foundSheetId) {
+                for (const sheet of spreadsheetMetadata.data.sheets) {
+                  if (sheet.properties.title === sheetName) {
+                    foundSheetId = sheet.properties.sheetId;
+                    break;
+                  }
                 }
               }
-              break;
             }
           }
-          
-          if (foundSheet) break; // Stop searching if we found it
         }
       } catch (error) {
         // Sheet might not exist, just continue
@@ -63,24 +68,18 @@ export async function DELETE(request) {
       }
     }
 
-    if (!foundSheet || rowIndexToDelete === -1 || foundSheetId === null) {
+    if (foundEntries.length === 0 || foundSheetId === null) {
       return Response.json({ 
         success: false, 
         error: 'Booking not found in any sheet' 
       }, { status: 404 });
     }
     
-    console.log(`Found booking with UUID ${uuid} in sheet ${foundSheet} at row ${rowIndexToDelete}`);
+    console.log(`Found ${foundEntries.length} booking entries with UUID ${uuid}`);
     
-    // Instead of actually deleting the row, let's move it to a "Deleted" sheet
-    // First, get the row data
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${foundSheet}!A${rowIndexToDelete}:S${rowIndexToDelete}`,
-    });
-    
-    const rowData = response.data.values[0];
-    
+    // Sort entries by day index to maintain order when moving to deleted sheet
+    foundEntries.sort((a, b) => (a.dayIndex || 0) - (b.dayIndex || 0));    
+    // Instead of actually deleting the rows, let's move them to a "Deleted" sheet
     // Check if "Deleted" sheet exists, if not create it
     let deletedSheetExists = false;
     let deletedSheetId = null;
@@ -113,53 +112,94 @@ export async function DELETE(request) {
       // Add headers to Deleted sheet
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: "Deleted!A1:T1",
+        range: "Deleted!A1:U1",
         valueInputOption: "RAW",
         resource: {
           values: [[
             "UUID", "Day", "Month", "Client", "Rooms", "Status",
             "Agent", "From", "To", "Nights", "Voucher", "Safari",
             "Safari Date", "Arrival", "Contact", "Requests", "Created By", "Edit History",
-            "Deleted By", "Deleted On"
+            "Day Index", "Deleted By", "Deleted On"
           ]]
         }
       });
     }
     
-    // Add the row to Deleted sheet with deletion metadata
+    // Move all entries to Deleted sheet with deletion metadata
+    const entriesToDelete = [];
+    for (const entry of foundEntries) {
+      const extendedRowData = [
+        ...entry.rowData, 
+        deletedBy || "unknown", 
+        new Date().toISOString()
+      ];
+      entriesToDelete.push(extendedRowData);
+    }
+    
+    // Add all entries to Deleted sheet
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: "Deleted!A2:T",
+      range: "Deleted!A2:U",
       valueInputOption: "USER_ENTERED",
       resource: {
-        values: [
-          [...rowData, deletedBy || "unknown", new Date().toISOString()],
-        ],
+        values: entriesToDelete,
       },
     });
     
-    // Now delete the original row
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      requestBody: {
-        requests: [
-          {
-            deleteDimension: {
-              range: {
-                sheetId: foundSheetId,
-                dimension: 'ROWS',
-                startIndex: rowIndexToDelete - 1, // 0-indexed
-                endIndex: rowIndexToDelete // exclusive
-              }
-            }
-          }
-        ]
+    // Now delete the original rows (in reverse order to maintain indices)
+    // Group by sheet and sort by row index descending
+    const entriesBySheet = {};
+    foundEntries.forEach(entry => {
+      if (!entriesBySheet[entry.sheetName]) {
+        entriesBySheet[entry.sheetName] = [];
       }
+      entriesBySheet[entry.sheetName].push(entry);
     });
+    
+    // Delete from each sheet
+    for (const [sheetName, entries] of Object.entries(entriesBySheet)) {
+      // Sort by row index descending to delete from bottom up
+      entries.sort((a, b) => b.rowIndex - a.rowIndex);
+      
+      // Find sheet ID for this sheet
+      let currentSheetId = null;
+      for (const sheet of spreadsheetMetadata.data.sheets) {
+        if (sheet.properties.title === sheetName) {
+          currentSheetId = sheet.properties.sheetId;
+          break;
+        }
+      }
+      
+      if (currentSheetId) {
+        // Delete each row
+        for (const entry of entries) {
+          await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+              requests: [
+                {
+                  deleteDimension: {
+                    range: {
+                      sheetId: currentSheetId,
+                      dimension: 'ROWS',
+                      startIndex: entry.rowIndex - 1, // 0-indexed
+                      endIndex: entry.rowIndex // exclusive
+                    }
+                  }
+                }
+              ]
+            }
+          });
+          
+          console.log(`Deleted row ${entry.rowIndex} from sheet ${sheetName}`);
+        }
+      }
+    }
     
     return Response.json({ 
       success: true, 
-      message: `Booking deleted from sheet ${foundSheet} at row ${rowIndexToDelete}` 
+      message: `Deleted ${foundEntries.length} booking entries with UUID ${uuid} from ${Object.keys(entriesBySheet).length} sheet(s)`,
+      deletedEntries: foundEntries.length
     });
   } catch (error) {
     console.error('Error deleting booking from Google Sheets:', error);

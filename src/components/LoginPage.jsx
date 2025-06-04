@@ -1,21 +1,8 @@
 "use client"
 
+import { loginData } from '@/utils/constant';
 import { useState } from 'react';
 
-const login = [
-  {
-    username: "@karelJoseph",
-    password: "12345",
-  },
-  {
-    username: "@manraj",
-    password: "12345",
-  },
-  {
-    username: "admin@123",
-    password: "admin@123",
-  }
-];
 
 function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -28,11 +15,11 @@ function LoginPage({ onLogin }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Check for specific credentials: admin@123 and 12345
-    const isValidLogin = login.some(
+    const isValidLogin = loginData.some(
       (user) => user.username === username && user.password === password
     );
     if (isValidLogin) {
-      const details = login.find(
+      const details = loginData.find(
         (user) => user.username === username
       );
       const currentTime = new Date().toISOString();

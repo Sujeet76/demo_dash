@@ -1,5 +1,6 @@
 "use client";
 
+import { loginData } from "@/utils/constant";
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 
@@ -16,9 +17,18 @@ function App() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    const loginStatus = localStorage.getItem("isLoggedIn") === "true"; 
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const isValidLogin = loginData.find((user)=> user.username === userInfo.username)
     setIsClient(true);
-    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(loginStatus);
+    if (loginStatus && isValidLogin) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("username");
+    }
   }, []);
 
   const handleLogin = (user) => {
