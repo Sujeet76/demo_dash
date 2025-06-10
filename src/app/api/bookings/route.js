@@ -519,6 +519,11 @@ async function findInsertionPoint(
 ) {
   let insertIndex = 2;
 
+  console.log({
+    bookingYear,
+    dayNumber,
+  })
+
   // Find year block
   let yearBlockStart = -1;
   let yearBlockEnd = -1;
@@ -571,15 +576,41 @@ async function findInsertionPoint(
         continue;
       }
 
-      const rowMonth = currentRow[2];
-      const rowDayParts = rowMonth.split("-");
+      const rowMonth = currentRow[2]?.trim()?.toLowerCase();
+      const rowDayParts = rowMonth.split("-") || [];
 
       if (rowDayParts.length === 2) {
         const rowDay = parseInt(rowDayParts[0], 10);
-
+        // console.log({
+        //   ss: currentRow[3],
+        //   rowDay,
+        //   dayNumber,
+        // })
         if (dayNumber <= rowDay) {
-          insertIndex = i + 2; // +2 for 1-based indexing
-          break;
+          if(!currentRow[3] || currentRow[3]?.trim() ==="") {
+            insertIndex = i + 2; // Insert before this row
+            break;
+          }
+        }
+      }else if (rowMonth === "total") {
+        // If we hit a total row, insert before it
+        // if it's previous row and compared day is less than or equal to total row day
+        const previousRow = rows[Math.max(i - 1, yearBlockStart)];
+        const previousRowDayParts = previousRow[2]?.trim().toLowerCase().split("-") || [];
+        // console.log({
+        //   previousRow,
+        //   pr: previousRow[3],
+        //   prDay: previousRowDayParts,
+        //   currentRow: currentRow[3],
+        //   dayNumber,
+        // })
+
+        if(previousRowDayParts?.length === 2){
+          const previousRowDay = parseInt(previousRowDayParts[0], 10);
+          if (dayNumber <= previousRowDay) {
+            insertIndex = i + 2; // Insert before this total row to that day block
+            break;
+          }
         }
       }
     }
