@@ -30,7 +30,7 @@ function getSheetNameFromDate(date) {
   return MONTH_NAMES[month];
 }
 
-const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // Helper function to format date for booking data
 function formatDateForBooking(date) {
@@ -38,17 +38,17 @@ function formatDateForBooking(date) {
   const month = date.getMonth(); // 0-based
   const year = date.getFullYear();
   const monthName = MONTH_NAMES[month];
-  
+
   // Get day of week (0 = Sunday, 1 = Monday, etc.)
   const dayOfWeek = date.getDay();
   const dayName = DAY[dayOfWeek];
-  
+
   return {
     day: day,
     month: `${day}-${monthName}`,
     year: year,
     sheetName: monthName,
-    dayName: dayName
+    dayName: dayName,
   };
 }
 
@@ -384,7 +384,7 @@ export async function POST(request) {
         // Create booking row for this specific date
         const newRow = [
           bookingId,
-          dateInfo.dayName, // Day of the week  
+          dateInfo.dayName, // Day of the week
           dateInfo.month,
           bookingData.client,
           bookingData.reqRooms,
@@ -522,7 +522,7 @@ async function findInsertionPoint(
   console.log({
     bookingYear,
     dayNumber,
-  })
+  });
 
   // Find year block
   let yearBlockStart = -1;
@@ -587,16 +587,17 @@ async function findInsertionPoint(
         //   dayNumber,
         // })
         if (dayNumber <= rowDay) {
-          if(!currentRow[3] || currentRow[3]?.trim() ==="") {
+          if (!currentRow[3] || currentRow[3]?.trim() === "") {
             insertIndex = i + 2; // Insert before this row
             break;
           }
         }
-      }else if (rowMonth === "total") {
+      } else if (rowMonth === "total") {
         // If we hit a total row, insert before it
         // if it's previous row and compared day is less than or equal to total row day
         const previousRow = rows[Math.max(i - 1, yearBlockStart)];
-        const previousRowDayParts = previousRow[2]?.trim().toLowerCase().split("-") || [];
+        const previousRowDayParts =
+          previousRow[2]?.trim().toLowerCase().split("-") || [];
         // console.log({
         //   previousRow,
         //   pr: previousRow[3],
@@ -605,7 +606,7 @@ async function findInsertionPoint(
         //   dayNumber,
         // })
 
-        if(previousRowDayParts?.length === 2){
+        if (previousRowDayParts?.length === 2) {
           const previousRowDay = parseInt(previousRowDayParts[0], 10);
           if (dayNumber <= previousRowDay) {
             insertIndex = i + 2; // Insert before this total row to that day block
@@ -813,26 +814,34 @@ async function insertBookingRow(
       requestBody: {
         requests: [
           {
+            // Column 2: Blue background, white bold text
             repeatCell: {
               range: {
                 sheetId: sheetId,
                 startRowIndex: insertIndex - 1,
                 endRowIndex: insertIndex,
-                startColumnIndex: 0,
-                endColumnIndex: 19,
+                startColumnIndex: 1, // Column 2 only
+                endColumnIndex: 2, // Column 2 only
               },
               cell: {
                 userEnteredFormat: {
+                  backgroundColor: {
+                    red: 0.0, // 0/255
+                    green: 0.69, // 176/255 ≈ 0.690
+                    blue: 0.941, // 240/255 ≈ 0.941
+                  },
                   textFormat: {
                     foregroundColor: {
-                      red: 0.0,
-                      green: 0.0,
-                      blue: 0.0,
+                      red: 1.0, // White text
+                      green: 1.0,
+                      blue: 1.0,
                     },
+                    bold: true, // Bold font weight
                   },
                 },
               },
-              fields: "userEnteredFormat.textFormat",
+              fields:
+                "userEnteredFormat.backgroundColor,userEnteredFormat.textFormat",
             },
           },
           {
@@ -841,7 +850,7 @@ async function insertBookingRow(
                 sheetId: sheetId,
                 startRowIndex: insertIndex - 1,
                 endRowIndex: insertIndex,
-                startColumnIndex: 1,
+                startColumnIndex: 2,
                 endColumnIndex: 19,
               },
               cell: {
@@ -852,9 +861,18 @@ async function insertBookingRow(
                     blue: 1.0,
                     alpha: 0.0,
                   },
+                  textFormat: {
+                    foregroundColor: {
+                      red: 0.0,
+                      green: 0.0,
+                      blue: 0.0,
+                    },
+                    bold: false,
+                  },
                 },
               },
-              fields: "userEnteredFormat.backgroundColor",
+              fields:
+                "userEnteredFormat.backgroundColor,userEnteredFormat.textFormat",
             },
           },
         ],
