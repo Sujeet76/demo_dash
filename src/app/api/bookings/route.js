@@ -573,12 +573,29 @@ async function findInsertionPoint(
 
       const currentRow = rows[i];
       if (!currentRow || !currentRow[2] || currentRow[2].trim() === "") {
+
+        // this handles empty rows and it's previous row contains a valid date
+        const previousRow = rows[Math.max(i - 1, yearBlockStart)];
+        // If we hit an empty row, we can insert here
+        const previousRowMonth = previousRow[2]?.trim()?.toLowerCase();
+        const previousRowDayParts = previousRowMonth.split("-") || [];
+        if (previousRowDayParts.length === 2){
+          const previousRowDay = parseInt(previousRowDayParts[0], 10);
+          if (dayNumber <= previousRowDay) {
+            insertIndex = i + 2; // Insert before this row
+            break;
+          }
+        }
+
         continue;
       }
 
       const rowMonth = currentRow[2]?.trim()?.toLowerCase();
       const rowDayParts = rowMonth.split("-") || [];
-
+      // console.log({
+      //   rowDayParts,
+      //   rowMonth,
+      // })
       if (rowDayParts.length === 2) {
         const rowDay = parseInt(rowDayParts[0], 10);
         // console.log({
@@ -592,6 +609,8 @@ async function findInsertionPoint(
             break;
           }
         }
+        
+
       } else if (rowMonth === "total") {
         // If we hit a total row, insert before it
         // if it's previous row and compared day is less than or equal to total row day
