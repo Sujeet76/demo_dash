@@ -576,9 +576,20 @@ async function findInsertionPoint(
 
         // this handles empty rows and it's previous row contains a valid date
         const previousRow = rows[Math.max(i - 1, yearBlockStart)];
+
+        if(!previousRow || !previousRow[2] || previousRow[2].trim() === "") {
+          // If we hit an empty row and previous row is also empty, continue to next row
+          console.log("Hit an empty row with no valid previous date, continuing to next row");
+          // continue;
+        }
+        // console.log({
+        //   previousRow,
+        //   previousRowMonth: previousRow[2]?.trim()?.toLowerCase(),
+        // })
+
         // If we hit an empty row, we can insert here
         const previousRowMonth = previousRow[2]?.trim()?.toLowerCase();
-        const previousRowDayParts = previousRowMonth.split("-") || [];
+        const previousRowDayParts = previousRowMonth?.split("-") || [];
         if (previousRowDayParts.length === 2){
           const previousRowDay = parseInt(previousRowDayParts[0], 10);
           if (dayNumber <= previousRowDay) {
